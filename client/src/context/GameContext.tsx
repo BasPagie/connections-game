@@ -27,6 +27,8 @@ export interface GameState {
   finalResults: FinalResults | null;
   countdown: number | null;
   phase: "idle" | "lobby" | "playing" | "countdown" | "round-end" | "finished";
+  timeRemainingMs: number | null;
+  errorMessage: string | null;
 }
 
 const initialState: GameState = {
@@ -40,6 +42,8 @@ const initialState: GameState = {
   finalResults: null,
   countdown: null,
   phase: "idle",
+  timeRemainingMs: null,
+  errorMessage: null,
 };
 
 // ─── Actions ───────────────────────────────────────────
@@ -58,6 +62,9 @@ export type GameAction =
   | { type: "ROUND_END"; result: RoundResult }
   | { type: "GAME_END"; results: FinalResults }
   | { type: "NEXT_ROUND" }
+  | { type: "TIME_UPDATE"; timeRemainingMs: number }
+  | { type: "SET_ERROR"; message: string }
+  | { type: "CLEAR_ERROR" }
   | { type: "RESET" };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -177,6 +184,15 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         currentRoundResult: null,
         phase: "playing",
       };
+
+    case "TIME_UPDATE":
+      return { ...state, timeRemainingMs: action.timeRemainingMs };
+
+    case "SET_ERROR":
+      return { ...state, errorMessage: action.message };
+
+    case "CLEAR_ERROR":
+      return { ...state, errorMessage: null };
 
     case "RESET":
       return initialState;

@@ -20,6 +20,8 @@ import {
   getPlayerRoundState,
   submitGroupGuess,
   submitAnswer,
+  submitOpenDeurAnswer,
+  skipOpenDeurQuestion,
   getPlayerProgress,
   isRoundComplete,
   forceEndRound,
@@ -28,6 +30,7 @@ import {
   startTimer,
   cleanupGame,
 } from './gameEngine.js';
+import { PREMADE_AVATARS } from '../../shared/types.js';
 
 type IOServer = Server<ClientToServerEvents, ServerToClientEvents>;
 type IOSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
@@ -35,27 +38,64 @@ type IOSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
 // Store round results per room for final results
 const roomRoundResults = new Map<string, RoundResult[]>();
 
+// Store countdown intervals per room for cleanup
+const roomCountdowns = new Map<string, ReturnType<typeof setInterval>>();
+
+// Simple per-socket rate limiter
+const socketEventTimestamps = new Map<string, number[]>();
+const RATE_LIMIT_WINDOW_MS = 1000;
+const RATE_LIMIT_MAX_EVENTS = 10;
+
+function isRateLimited(socketId: string): boolean {
+  const now = Date.now();
+  const timestamps = socketEventTimestamps.get(socketId) ?? [];
+  const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  recent.push(now);
+  socketEventTimestamps.set(socketId, recent);
+  return recent.length > RATE_LIMIT_MAX_EVENTS;
+}
+
+const MAX_NICKNAME_LENGTH = 20;
+
+function sanitizeNickname(raw: string): string {
+  return raw.trim().slice(0, MAX_NICKNAME_LENGTH).replace(/[<>&"']/g, '');
+}
+
+function isValidAvatar(raw: string): boolean {
+  return typeof raw === 'string' && PREMADE_AVATARS.includes(raw);
+}
+
 export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
 
   // ─── Create Room ─────────────────────────────────────
   socket.on('create-room', ({ nickname, avatarUrl }) => {
-    const result = createRoom(socket.id, nickname, avatarUrl);
+    const safeName = sanitizeNickname(nickname);
+    if (!safeName || !isValidAvatar(avatarUrl)) {
+      socket.emit('error', { message: 'Ongeldige naam of avatar.' });
+      return;
+    }
+    const result = createRoom(socket.id, safeName, avatarUrl);
     socket.join(result.room.roomId);
-    socket.emit('room-created', { roomId: result.room.roomId, player: result.player });
-    console.log(`[Room] Aangemaakt: ${result.room.roomId} door ${nickname}`);
+    socket.emit('room-created', { room: result.room, player: result.player });
+    console.log(`[Room] Aangemaakt: ${result.room.roomId} door ${safeName}`);
   });
 
   // ─── Join Room ───────────────────────────────────────
   socket.on('join-room', ({ roomId, nickname, avatarUrl }) => {
-    const result = joinRoom(socket.id, roomId, nickname, avatarUrl);
+    const safeName = sanitizeNickname(nickname);
+    if (!safeName || !isValidAvatar(avatarUrl)) {
+      socket.emit('error', { message: 'Ongeldige naam of avatar.' });
+      return;
+    }
+    const result = joinRoom(socket.id, roomId, safeName, avatarUrl);
     if (!result) {
-      socket.emit('error', { message: 'Kamer niet gevonden of spel is al begonnen.' });
+      socket.emit('error', { message: 'Kamer niet gevonden, vol, of spel is al begonnen.' });
       return;
     }
     socket.join(roomId);
     socket.emit('room-joined', { room: result.room, player: result.player });
     socket.to(roomId).emit('player-joined', { player: result.player });
-    console.log(`[Room] ${nickname} is toegetreden tot ${roomId}`);
+    console.log(`[Room] ${safeName} is toegetreden tot ${roomId}`);
   });
 
   // ─── Leave Room ──────────────────────────────────────
@@ -92,8 +132,9 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     const player = room.players.find((p) => p.id === playerId);
     if (!player) return;
 
-    player.score = score;
-    io.to(mapping.roomId).emit('score-updated', { playerId, score });
+    const clampedScore = Math.max(0, Math.min(10000, Math.round(score)));
+    player.score = clampedScore;
+    io.to(mapping.roomId).emit('score-updated', { playerId, score: clampedScore });
   });
 
   // ─── Start Game ──────────────────────────────────────
@@ -136,18 +177,27 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     io.to(roomId).emit('countdown', { count });
     count--;
     const countdownInterval = setInterval(() => {
+      // Stop if room was deleted during countdown
+      if (!getRoom(roomId)) {
+        clearInterval(countdownInterval);
+        roomCountdowns.delete(roomId);
+        return;
+      }
       if (count >= 0) {
         io.to(roomId).emit('countdown', { count });
         count--;
       } else {
         clearInterval(countdownInterval);
+        roomCountdowns.delete(roomId);
         startNewRound(io, roomId);
       }
     }, 1000);
+    roomCountdowns.set(roomId, countdownInterval);
   });
 
   // ─── Submit Group Guess ──────────────────────────────
   socket.on('submit-group', ({ words }) => {
+    if (isRateLimited(socket.id)) return;
     const mapping = getSocketMapping(socket.id);
     if (!mapping) return;
 
@@ -180,6 +230,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
 
   // ─── Submit Answer (Puzzelronde) ─────────────────────
   socket.on('submit-answer', ({ answer }) => {
+    if (isRateLimited(socket.id)) return;
     const mapping = getSocketMapping(socket.id);
     if (!mapping) return;
 
@@ -196,6 +247,73 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
       correct: result.correct,
       correctAnswer: result.correctAnswer,
       roundState,
+    });
+
+    // Broadcast progress
+    const progress = getPlayerProgress(mapping.roomId);
+    io.to(mapping.roomId).emit('player-progress', progress);
+
+    if (isRoundComplete(mapping.roomId)) {
+      endCurrentRound(io, mapping.roomId);
+    }
+  });
+
+  // ─── Submit Open Deur Answer ─────────────────────────
+  socket.on('submit-opendeur-answer', ({ answer }) => {
+    if (isRateLimited(socket.id)) return;
+    const mapping = getSocketMapping(socket.id);
+    if (!mapping) return;
+
+    const room = getRoom(mapping.roomId);
+    if (!room || room.status !== 'playing') return;
+
+    const result = submitOpenDeurAnswer(mapping.roomId, mapping.playerId, answer);
+    if (!result) return;
+
+    const roundState = getPlayerRoundState(mapping.roomId, mapping.playerId, room);
+    if (!roundState) return;
+
+    if (result.correct && result.questionComplete) {
+      // Question complete — send next question state or finish
+      socket.emit('opendeur-next-question', {
+        roundState,
+        previousAnswers: [], // client already knows found answers
+      });
+    } else {
+      socket.emit('opendeur-result', {
+        correct: result.correct,
+        matchedAnswer: result.matchedAnswer,
+        roundState,
+      });
+    }
+
+    // Broadcast progress
+    const progress = getPlayerProgress(mapping.roomId);
+    io.to(mapping.roomId).emit('player-progress', progress);
+
+    if (isRoundComplete(mapping.roomId)) {
+      endCurrentRound(io, mapping.roomId);
+    }
+  });
+
+  // ─── Skip Open Deur Question ─────────────────────────
+  socket.on('skip-question', () => {
+    if (isRateLimited(socket.id)) return;
+    const mapping = getSocketMapping(socket.id);
+    if (!mapping) return;
+
+    const room = getRoom(mapping.roomId);
+    if (!room || room.status !== 'playing') return;
+
+    const result = skipOpenDeurQuestion(mapping.roomId, mapping.playerId);
+    if (!result) return;
+
+    const roundState = getPlayerRoundState(mapping.roomId, mapping.playerId, room);
+    if (!roundState) return;
+
+    socket.emit('opendeur-next-question', {
+      roundState,
+      previousAnswers: result.previousAnswers,
     });
 
     // Broadcast progress
@@ -257,6 +375,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
   // ─── Disconnect ──────────────────────────────────────
   socket.on('disconnect', () => {
     console.log(`[Socket] Verbinding verbroken: ${socket.id}`);
+    socketEventTimestamps.delete(socket.id);
     handleLeave(io, socket);
   });
 }
@@ -269,7 +388,16 @@ function handleLeave(io: IOServer, socket: IOSocket): void {
 
   socket.leave(result.roomId);
 
-  if (!result.roomDeleted) {
+  if (result.roomDeleted) {
+    // Clean up all resources for this room
+    cleanupGame(result.roomId);
+    roomRoundResults.delete(result.roomId);
+    const countdown = roomCountdowns.get(result.roomId);
+    if (countdown) {
+      clearInterval(countdown);
+      roomCountdowns.delete(result.roomId);
+    }
+  } else {
     io.to(result.roomId).emit('player-left', {
       playerId: result.playerId,
       newHostId: result.newHostId,
@@ -294,14 +422,14 @@ function startNewRound(io: IOServer, roomId: string): void {
   // Send personalized round state to each player
   for (const player of room.players) {
     const playerState = getPlayerRoundState(roomId, player.id, room);
-    if (playerState) {
-      // Find the socket(s) for this player — we use the room broadcast
-      io.to(roomId).emit('round-start', {
+    if (!playerState) continue;
+    const sid = getSocketIdForPlayer(roomId, player.id);
+    if (sid) {
+      io.to(sid).emit('round-start', {
         roundIndex: room.currentRoundIndex,
         roundState: playerState,
         roundType: roundConfig.type,
       });
-      break; // All players get same initial state
     }
   }
 

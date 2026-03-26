@@ -7,9 +7,13 @@ import type { ClientToServerEvents, ServerToClientEvents } from '../../shared/ty
 const app = express();
 const server = http.createServer(app);
 
+const CORS_ORIGINS = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(',')
+  : ['http://localhost:5173', 'http://localhost:5174', 'http://127.0.0.1:5173', 'http://127.0.0.1:5174'];
+
 const io = new Server<ClientToServerEvents, ServerToClientEvents>(server, {
   cors: {
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: CORS_ORIGINS,
     methods: ['GET', 'POST'],
   },
 });

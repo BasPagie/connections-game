@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
 import { useGame } from '../context/GameContext';
@@ -7,37 +7,23 @@ export function useSocketEvents() {
   const socket = useSocket();
   const { dispatch } = useGame();
   const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
 
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('room-created', ({ roomId, player }) => {
+    socket.on('room-created', ({ room, player }) => {
       dispatch({ type: 'SET_PLAYER', player });
-      dispatch({
-        type: 'SET_ROOM',
-        room: {
-          roomId,
-          players: [player],
-          settings: {
-            rounds: [{ type: 'connections', difficulty: 'medium' }, { type: 'puzzelronde', difficulty: 'medium' }, { type: 'connections', difficulty: 'medium' }],
-            attemptsMode: 'limited',
-            maxAttempts: 4,
-            timeLimitSeconds: 120,
-            hostControl: true,
-            hostPlays: true,
-          },
-          status: 'lobby',
-          currentRoundIndex: 0,
-        },
-      });
-      navigate(`/lobby/${roomId}`);
+      dispatch({ type: 'SET_ROOM', room });
+      navigateRef.current(`/lobby/${room.roomId}`);
     });
 
     socket.on('room-joined', ({ room, player }) => {
       dispatch({ type: 'SET_PLAYER', player });
       dispatch({ type: 'SET_ROOM', room });
       if (room.status === 'lobby') {
-        navigate(`/lobby/${room.roomId}`);
+        navigateRef.current(`/lobby/${room.roomId}`);
       }
     });
 
@@ -77,6 +63,14 @@ export function useSocketEvents() {
       dispatch({ type: 'UPDATE_ROUND_STATE', roundState });
     });
 
+    socket.on('opendeur-result', ({ correct, matchedAnswer, roundState }) => {
+      dispatch({ type: 'UPDATE_ROUND_STATE', roundState });
+    });
+
+    socket.on('opendeur-next-question', ({ roundState, previousAnswers }) => {
+      dispatch({ type: 'UPDATE_ROUND_STATE', roundState });
+    });
+
     socket.on('player-progress', (progress) => {
       dispatch({ type: 'PLAYER_PROGRESS', progress });
     });
@@ -91,11 +85,17 @@ export function useSocketEvents() {
 
     socket.on('error', ({ message }) => {
       console.error('[Game Error]', message);
+      dispatch({ type: 'SET_ERROR', message });
+      setTimeout(() => dispatch({ type: 'CLEAR_ERROR' }), 5000);
+    });
+
+    socket.on('time-update', ({ timeRemainingMs }) => {
+      dispatch({ type: 'TIME_UPDATE', timeRemainingMs });
     });
 
     socket.on('room-closed', () => {
       dispatch({ type: 'RESET' });
-      navigate('/');
+      navigateRef.current('/');
     });
 
     return () => {
@@ -110,11 +110,14 @@ export function useSocketEvents() {
       socket.off('round-start');
       socket.off('group-result');
       socket.off('answer-result');
+      socket.off('opendeur-result');
+      socket.off('opendeur-next-question');
       socket.off('player-progress');
       socket.off('round-end');
       socket.off('game-end');
       socket.off('error');
+      socket.off('time-update');
       socket.off('room-closed');
     };
-  }, [socket, dispatch, navigate]);
+  }, [socket, dispatch]);
 }

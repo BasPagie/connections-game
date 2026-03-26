@@ -1,4 +1,4 @@
-import type { ConnectionsPuzzle, PuzzelrondePuzzle } from '../../shared/types.js';
+import type { ConnectionsPuzzle, PuzzelrondePuzzle, OpenDeurPuzzle } from '../../shared/types.js';
 
 const connectionsPuzzles: ConnectionsPuzzle[] = [
   // ═══════════════════════════════════════════
@@ -742,4 +742,325 @@ export function getConnectionsPuzzles(): ConnectionsPuzzle[] {
 
 export function getPuzzelrondePuzzles(): PuzzelrondePuzzle[] {
   return puzzelrondePuzzles;
+}
+
+// ═══════════════════════════════════════════════════════
+//  OPEN DEUR PUZZLES
+// ═══════════════════════════════════════════════════════
+const openDeurPuzzles: OpenDeurPuzzle[] = [
+  // ═══════════════════════════════════════════
+  //  EASY — obvious, first-thing-you-think-of answers
+  // ═══════════════════════════════════════════
+  {
+    id: 'od-e1',
+    type: 'opendeur',
+    difficulty: 'easy',
+    questions: [
+      { question: 'Wat weet je van de Olympische Spelen?', answers: ['Goud', 'Fakkel', 'Ringen', 'Medaille'] },
+      { question: 'Wat weet je van een verjaardag?', answers: ['Taart', 'Cadeau', 'Slingers', 'Kaarsjes'] },
+      { question: 'Wat weet je van de ruimte?', answers: ['Raket', 'Planeet', 'Astronaut', 'Ster'] },
+    ],
+  },
+  {
+    id: 'od-e2',
+    type: 'opendeur',
+    difficulty: 'easy',
+    questions: [
+      { question: 'Wat weet je van het strand?', answers: ['Zand', 'Zee', 'Handdoek', 'Parasol'] },
+      { question: 'Wat weet je van Sinterklaas?', answers: ['Schoen', 'Pepernoot', 'Stoomboot', 'Piet'] },
+      { question: 'Wat weet je van een ziekenhuis?', answers: ['Dokter', 'Ambulance', 'Bed', 'Verpleegster'] },
+    ],
+  },
+  {
+    id: 'od-e3',
+    type: 'opendeur',
+    difficulty: 'easy',
+    questions: [
+      { question: 'Wat weet je van de brandweer?', answers: ['Slang', 'Ladder', 'Sirene', 'Brand'] },
+      { question: 'Wat weet je van een pretpark?', answers: ['Achtbaan', 'Reuzenrad', 'Suikerspin', 'Kaartje'] },
+      { question: 'Wat weet je van pizza?', answers: ['Kaas', 'Oven', 'Italië', 'Salami'] },
+    ],
+  },
+  {
+    id: 'od-e4',
+    type: 'opendeur',
+    difficulty: 'easy',
+    questions: [
+      { question: 'Wat weet je van de maan?', answers: ['Nacht', 'Licht', 'Krater', 'Vol'] },
+      { question: 'Wat weet je van een school?', answers: ['Leraar', 'Bel', 'Huiswerk', 'Schoolbord'] },
+      { question: 'Wat weet je van de politie?', answers: ['Sirene', 'Uniform', 'Boete', 'Agent'] },
+    ],
+  },
+  {
+    id: 'od-e5',
+    type: 'opendeur',
+    difficulty: 'easy',
+    questions: [
+      { question: 'Wat weet je van voetbal?', answers: ['Goal', 'Scheidsrechter', 'Bal', 'Elftal'] },
+      { question: 'Wat weet je van een camping?', answers: ['Tent', 'Kampvuur', 'Slaapzak', 'Caravan'] },
+      { question: 'Wat weet je van Kerst?', answers: ['Kerstboom', 'Ster', 'Kerstman', 'Cadeaus'] },
+    ],
+  },
+  {
+    id: 'od-e6',
+    type: 'opendeur',
+    difficulty: 'easy',
+    questions: [
+      { question: 'Wat weet je van de supermarkt?', answers: ['Kassa', 'Winkelwagen', 'Boodschappen', 'Schap'] },
+      { question: 'Wat weet je van een vliegtuig?', answers: ['Piloot', 'Vleugel', 'Vliegen', 'Koffer'] },
+      { question: 'Wat weet je van een bioscoop?', answers: ['Popcorn', 'Scherm', 'Film', 'Stoel'] },
+    ],
+  },
+  {
+    id: 'od-e7',
+    type: 'opendeur',
+    difficulty: 'easy',
+    questions: [
+      { question: 'Wat weet je van de zon?', answers: ['Stralen', 'Warm', 'Zonnebril', 'Licht'] },
+      { question: 'Wat weet je van een restaurant?', answers: ['Ober', 'Menu', 'Eten', 'Tafel'] },
+      { question: 'Wat weet je van de trein?', answers: ['Perron', 'Conducteur', 'Vertraging', 'Rails'] },
+    ],
+  },
+  {
+    id: 'od-e8',
+    type: 'opendeur',
+    difficulty: 'easy',
+    questions: [
+      { question: 'Wat weet je van een hond?', answers: ['Blaf', 'Huisdier', 'Riem', 'Poot'] },
+      { question: 'Wat weet je van een circus?', answers: ['Clown', 'Acrobaat', 'Tent', 'Leeuw'] },
+      { question: 'Wat weet je van regen?', answers: ['Paraplu', 'Nat', 'Druppel', 'Regenboog'] },
+    ],
+  },
+  {
+    id: 'od-e9',
+    type: 'opendeur',
+    difficulty: 'easy',
+    questions: [
+      { question: 'Wat weet je van een museum?', answers: ['Schilderij', 'Kunst', 'Tentoonstelling', 'Rondleiding'] },
+      { question: 'Wat weet je van een boerderij?', answers: ['Koe', 'Tractor', 'Schuur', 'Boer'] },
+      { question: 'Wat weet je van een telefoon?', answers: ['Scherm', 'App', 'Oplader', 'Bellen'] },
+    ],
+  },
+  {
+    id: 'od-e10',
+    type: 'opendeur',
+    difficulty: 'easy',
+    questions: [
+      { question: 'Wat weet je van een bibliotheek?', answers: ['Boek', 'Stilte', 'Lenen', 'Lezen'] },
+      { question: 'Wat weet je van de winter?', answers: ['Sneeuw', 'Koud', 'Handschoenen', 'Schaatsen'] },
+      { question: 'Wat weet je van een bakker?', answers: ['Brood', 'Oven', 'Deeg', 'Croissant'] },
+    ],
+  },
+
+  // ═══════════════════════════════════════════
+  //  MEDIUM — require some thinking but still logical
+  // ═══════════════════════════════════════════
+  {
+    id: 'od-m1',
+    type: 'opendeur',
+    difficulty: 'medium',
+    questions: [
+      { question: 'Wat weet je van het Oude Egypte?', answers: ['Farao', 'Piramide', 'Mummie', 'Nijl'] },
+      { question: 'Wat weet je van Formule 1?', answers: ['Pitstop', 'Podium', 'Snelheid', 'Raceauto'] },
+      { question: 'Wat weet je van een vulkaan?', answers: ['Lava', 'Uitbarsting', 'Krater', 'As'] },
+    ],
+  },
+  {
+    id: 'od-m2',
+    type: 'opendeur',
+    difficulty: 'medium',
+    questions: [
+      { question: 'Wat weet je van de Titanic?', answers: ['IJsberg', 'Zinken', 'Reddingsboot', 'Schip'] },
+      { question: 'Wat weet je van sushi?', answers: ['Rijst', 'Wasabi', 'Sojasaus', 'Japan'] },
+      { question: 'Wat weet je van een marathon?', answers: ['Hardlopen', 'Finish', 'Kilometer', 'Zweten'] },
+    ],
+  },
+  {
+    id: 'od-m3',
+    type: 'opendeur',
+    difficulty: 'medium',
+    questions: [
+      { question: 'Wat weet je van de Tweede Wereldoorlog?', answers: ['Bevrijding', 'Bezetting', 'Verzet', 'Hitler'] },
+      { question: 'Wat weet je van yoga?', answers: ['Houding', 'Meditatie', 'Mat', 'Ademhaling'] },
+      { question: 'Wat weet je van Amsterdam?', answers: ['Gracht', 'Fiets', 'Anne Frank', 'Rijksmuseum'] },
+    ],
+  },
+  {
+    id: 'od-m4',
+    type: 'opendeur',
+    difficulty: 'medium',
+    questions: [
+      { question: 'Wat weet je van de maffia?', answers: ['Peetvader', 'Italië', 'Geweld', 'Familie'] },
+      { question: 'Wat weet je van een orkaan?', answers: ['Wind', 'Storm', 'Schade', 'Tropisch'] },
+      { question: 'Wat weet je van kaas?', answers: ['Gouda', 'Holland', 'Melk', 'Gaten'] },
+    ],
+  },
+  {
+    id: 'od-m5',
+    type: 'opendeur',
+    difficulty: 'medium',
+    questions: [
+      { question: 'Wat weet je van de Tour de France?', answers: ['Gele trui', 'Fietsen', 'Peloton', 'Berg'] },
+      { question: 'Wat weet je van Bitcoin?', answers: ['Geld', 'Minen', 'Digitaal', 'Crypto'] },
+      { question: 'Wat weet je van de Noordpool?', answers: ['IJs', 'IJsbeer', 'Kerstman', 'Koud'] },
+    ],
+  },
+  {
+    id: 'od-m6',
+    type: 'opendeur',
+    difficulty: 'medium',
+    questions: [
+      { question: 'Wat weet je van het Songfestival?', answers: ['Punten', 'ABBA', 'Zingen', 'Europa'] },
+      { question: 'Wat weet je van de Vikings?', answers: ['Schip', 'Noorwegen', 'Helm', 'Plunderen'] },
+      { question: 'Wat weet je van chocolade?', answers: ['Cacao', 'België', 'Reep', 'Smelten'] },
+    ],
+  },
+  {
+    id: 'od-m7',
+    type: 'opendeur',
+    difficulty: 'medium',
+    questions: [
+      { question: 'Wat weet je van poker?', answers: ['Bluf', 'Kaarten', 'All-in', 'Casino'] },
+      { question: 'Wat weet je van de Elfstedentocht?', answers: ['Schaatsen', 'Friesland', 'IJs', 'Winter'] },
+      { question: 'Wat weet je van Japan?', answers: ['Tokio', 'Samoerai', 'Sushi', 'Anime'] },
+    ],
+  },
+  {
+    id: 'od-m8',
+    type: 'opendeur',
+    difficulty: 'medium',
+    questions: [
+      { question: 'Wat weet je van het menselijk lichaam?', answers: ['Hart', 'Botten', 'Bloed', 'Spieren'] },
+      { question: 'Wat weet je van de Koude Oorlog?', answers: ['Berlijnse Muur', 'Rusland', 'Amerika', 'Kernwapen'] },
+      { question: 'Wat weet je van carnaval?', answers: ['Masker', 'Optocht', 'Prins', 'Confetti'] },
+    ],
+  },
+  {
+    id: 'od-m9',
+    type: 'opendeur',
+    difficulty: 'medium',
+    questions: [
+      { question: 'Wat weet je van Netflix?', answers: ['Serie', 'Film', 'Abonnement', 'Streamen'] },
+      { question: 'Wat weet je van de Romeinen?', answers: ['Colosseum', 'Gladiator', 'Toga', 'Keizer'] },
+      { question: 'Wat weet je van tennis?', answers: ['Racket', 'Bal', 'Wimbledon', 'Net'] },
+    ],
+  },
+  {
+    id: 'od-m10',
+    type: 'opendeur',
+    difficulty: 'medium',
+    questions: [
+      { question: 'Wat weet je van bier?', answers: ['Schuim', 'Kroeg', 'Glas', 'Pils'] },
+      { question: 'Wat weet je van een verkiezing?', answers: ['Stemmen', 'Campagne', 'Debat', 'Politiek'] },
+      { question: 'Wat weet je van de woestijn?', answers: ['Zand', 'Heet', 'Kameel', 'Oase'] },
+    ],
+  },
+
+  // ═══════════════════════════════════════════
+  //  HARD — specific knowledge needed
+  // ═══════════════════════════════════════════
+  {
+    id: 'od-h1',
+    type: 'opendeur',
+    difficulty: 'hard',
+    questions: [
+      { question: 'Wat weet je van de Franse Revolutie?', answers: ['Guillotine', 'Bastille', 'Napoleon', 'Adel'] },
+      { question: 'Wat weet je van quantumfysica?', answers: ['Atoom', 'Deeltje', 'Onzekerheid', 'Schrödinger'] },
+      { question: 'Wat weet je van de Griekse mythologie?', answers: ['Zeus', 'Olympus', 'Odysseus', 'Troje'] },
+    ],
+  },
+  {
+    id: 'od-h2',
+    type: 'opendeur',
+    difficulty: 'hard',
+    questions: [
+      { question: 'Wat weet je van het Vaticaan?', answers: ['Paus', 'Sint-Pieter', 'Conclaaf', 'Kardinaal'] },
+      { question: 'Wat weet je van het broeikaseffect?', answers: ['CO2', 'Opwarming', 'IJskappen', 'Methaan'] },
+      { question: 'Wat weet je van het menselijk DNA?', answers: ['Chromosoom', 'Genen', 'Helix', 'Mutatie'] },
+    ],
+  },
+  {
+    id: 'od-h3',
+    type: 'opendeur',
+    difficulty: 'hard',
+    questions: [
+      { question: 'Wat weet je van de Renaissance?', answers: ['Da Vinci', 'Florence', 'Kunst', 'Michelangelo'] },
+      { question: 'Wat weet je van het schaakspel?', answers: ['Schaakmat', 'Koning', 'Toren', 'Pion'] },
+      { question: 'Wat weet je van zwarte gaten?', answers: ['Zwaartekracht', 'Licht', 'Ruimte', 'Hawking'] },
+    ],
+  },
+  {
+    id: 'od-h4',
+    type: 'opendeur',
+    difficulty: 'hard',
+    questions: [
+      { question: 'Wat weet je van de VOC?', answers: ['Specerijen', 'Aandeel', 'Batavia', 'Handel'] },
+      { question: 'Wat weet je van opera?', answers: ['Aria', 'Sopraan', 'Orkest', 'Zingen'] },
+      { question: 'Wat weet je van kunstmatige intelligentie?', answers: ['Robot', 'Computer', 'Data', 'Machine learning'] },
+    ],
+  },
+  {
+    id: 'od-h5',
+    type: 'opendeur',
+    difficulty: 'hard',
+    questions: [
+      { question: 'Wat weet je van de Berlijnse Muur?', answers: ['Oost', 'West', 'Val', 'Duitsland'] },
+      { question: 'Wat weet je van whisky?', answers: ['Mout', 'Schotland', 'Vat', 'Distilleren'] },
+      { question: 'Wat weet je van het zonnestelsel?', answers: ['Aarde', 'Mars', 'Zon', 'Planeet'] },
+    ],
+  },
+  {
+    id: 'od-h6',
+    type: 'opendeur',
+    difficulty: 'hard',
+    questions: [
+      { question: 'Wat weet je van de Olympische Winterspelen?', answers: ['Bobslee', 'Schaatsen', 'Skiën', 'Sneeuw'] },
+      { question: 'Wat weet je van filosofie?', answers: ['Socrates', 'Denken', 'Plato', 'Logica'] },
+      { question: 'Wat weet je van het menselijk brein?', answers: ['Hersenen', 'Neuronen', 'Geheugen', 'Slim'] },
+    ],
+  },
+  {
+    id: 'od-h7',
+    type: 'opendeur',
+    difficulty: 'hard',
+    questions: [
+      { question: 'Wat weet je van het Wilde Westen?', answers: ['Cowboy', 'Revolver', 'Saloon', 'Paard'] },
+      { question: 'Wat weet je van jazz?', answers: ['Improvisatie', 'Saxofoon', 'Swing', 'New Orleans'] },
+      { question: 'Wat weet je van de diepzee?', answers: ['Donker', 'Druk', 'Duikboot', 'Vissen'] },
+    ],
+  },
+  {
+    id: 'od-h8',
+    type: 'opendeur',
+    difficulty: 'hard',
+    questions: [
+      { question: 'Wat weet je van de Nobelprijs?', answers: ['Stockholm', 'Dynamiet', 'Alfred Nobel', 'Vrede'] },
+      { question: 'Wat weet je van de Maya\'s?', answers: ['Kalender', 'Tempel', 'Piramide', 'Mexico'] },
+      { question: 'Wat weet je van wijn?', answers: ['Druif', 'Fles', 'Kurk', 'Rood'] },
+    ],
+  },
+  {
+    id: 'od-h9',
+    type: 'opendeur',
+    difficulty: 'hard',
+    questions: [
+      { question: 'Wat weet je van de Gouden Eeuw?', answers: ['Rembrandt', 'VOC', 'Schilderij', 'Amsterdam'] },
+      { question: 'Wat weet je van cryptografie?', answers: ['Enigma', 'Sleutel', 'Geheim', 'Code'] },
+      { question: 'Wat weet je van de Bermudadriehoek?', answers: ['Verdwijnen', 'Driehoek', 'Mysterie', 'Oceaan'] },
+    ],
+  },
+  {
+    id: 'od-h10',
+    type: 'opendeur',
+    difficulty: 'hard',
+    questions: [
+      { question: 'Wat weet je van het ISS?', answers: ['Ruimte', 'Astronaut', 'Baan', 'Zweven'] },
+      { question: 'Wat weet je van impressionisme?', answers: ['Monet', 'Schilderij', 'Parijs', 'Licht'] },
+      { question: 'Wat weet je van de Amazone?', answers: ['Regenwoud', 'Rivier', 'Brazilië', 'Jungle'] },
+    ],
+  },
+];
+
+export function getOpenDeurPuzzles(): OpenDeurPuzzle[] {
+  return openDeurPuzzles;
 }

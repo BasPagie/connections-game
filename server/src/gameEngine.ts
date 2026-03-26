@@ -2,17 +2,20 @@ import type {
   GameRoom,
   ConnectionsPuzzle,
   PuzzelrondePuzzle,
+  OpenDeurPuzzle,
   Puzzle,
   RoundState,
   ConnectionsRoundState,
   PuzzelrondeRoundState,
+  OpenDeurRoundState,
   PlayerProgress,
   PlayerRoundResult,
   RoundResult,
   FinalResults,
   ConnectionsGroup,
+  OpenDeurQuestion,
 } from '../../shared/types.js';
-import { getConnectionsPuzzles, getPuzzelrondePuzzles } from './puzzleStore.js';
+import { getConnectionsPuzzles, getPuzzelrondePuzzles, getOpenDeurPuzzles } from './puzzleStore.js';
 
 // ─── Per-player round tracking ─────────────────────────
 interface PlayerRoundTracker {
@@ -25,6 +28,9 @@ interface PlayerRoundTracker {
   endTime: number | null;
   score: number;
   pendingGroupIndex: number | null; // puzzelronde: group just solved, waiting for answer
+  // Open Deur tracking
+  currentQuestionIndex: number;
+  foundAnswersPerQuestion: Map<number, string[]>;
 }
 
 // ─── Game instance per room ────────────────────────────
@@ -35,9 +41,13 @@ interface GameInstance {
   timer: ReturnType<typeof setInterval> | null;
   roundStartTime: number;
   timeRemainingMs: number | null;
+  roundEnding: boolean;
 }
 
 const activeGames = new Map<string, GameInstance>();
+
+// Track used puzzle IDs per room to avoid repeats
+const usedPuzzles = new Map<string, Set<string>>();
 
 // ─── Shuffle array ─────────────────────────────────────
 function shuffle<T>(arr: T[]): T[] {
@@ -61,7 +71,9 @@ export function startRound(room: GameRoom): { roundState: RoundState; puzzle: Pu
   } else if (roundConfig.puzzleId) {
     const allPuzzles: Puzzle[] = roundConfig.type === 'connections'
       ? getConnectionsPuzzles()
-      : getPuzzelrondePuzzles();
+      : roundConfig.type === 'puzzelronde'
+        ? getPuzzelrondePuzzles()
+        : getOpenDeurPuzzles();
     const found = allPuzzles.find((p) => p.id === roundConfig.puzzleId);
     if (!found) return null;
     puzzle = found;
@@ -69,20 +81,23 @@ export function startRound(room: GameRoom): { roundState: RoundState; puzzle: Pu
     // Random puzzle filtered by difficulty
     const allPuzzles: Puzzle[] = roundConfig.type === 'connections'
       ? getConnectionsPuzzles()
-      : getPuzzelrondePuzzles();
+      : roundConfig.type === 'puzzelronde'
+        ? getPuzzelrondePuzzles()
+        : getOpenDeurPuzzles();
     const filtered = allPuzzles.filter((p) => p.difficulty === roundConfig.difficulty);
     const pool = filtered.length > 0 ? filtered : allPuzzles;
-    if (pool.length === 0) return null;
-    puzzle = pool[Math.floor(Math.random() * pool.length)];
+    // Exclude previously used puzzles in this game
+    const used = usedPuzzles.get(room.roomId) ?? new Set();
+    const available = pool.filter((p) => !used.has(p.id));
+    const finalPool = available.length > 0 ? available : pool;
+    if (finalPool.length === 0) return null;
+    puzzle = finalPool[Math.floor(Math.random() * finalPool.length)];
   }
 
-  // Create shuffled words
-  let words: string[];
-  if (puzzle.type === 'connections') {
-    words = shuffle(puzzle.groups.flatMap((g) => g.words));
-  } else {
-    words = shuffle(puzzle.groups.flatMap((g) => g.words));
-  }
+  // Track this puzzle as used for this room
+  const used = usedPuzzles.get(room.roomId) ?? new Set();
+  used.add(puzzle.id);
+  usedPuzzles.set(room.roomId, used);
 
   // Initialize player trackers
   const playerTrackers = new Map<string, PlayerRoundTracker>();
@@ -99,6 +114,8 @@ export function startRound(room: GameRoom): { roundState: RoundState; puzzle: Pu
       endTime: null,
       score: 0,
       pendingGroupIndex: null,
+      currentQuestionIndex: 0,
+      foundAnswersPerQuestion: new Map(),
     });
   }
 
@@ -113,6 +130,7 @@ export function startRound(room: GameRoom): { roundState: RoundState; puzzle: Pu
     timer: null,
     roundStartTime: Date.now(),
     timeRemainingMs,
+    roundEnding: false,
   };
 
   activeGames.set(room.roomId, instance);
@@ -138,7 +156,7 @@ function buildRoundState(instance: GameInstance, room: GameRoom): RoundState {
       attemptsLeft,
       timeRemainingMs,
     };
-  } else {
+  } else if (puzzle.type === 'puzzelronde') {
     const words = shuffle(puzzle.groups.flatMap((g) => g.words));
     return {
       type: 'puzzelronde',
@@ -146,6 +164,16 @@ function buildRoundState(instance: GameInstance, room: GameRoom): RoundState {
       solvedGroups: [],
       pendingAnswer: false,
       attemptsLeft,
+      timeRemainingMs,
+    };
+  } else {
+    return {
+      type: 'opendeur',
+      currentQuestionIndex: 0,
+      question: puzzle.questions[0].question,
+      foundAnswers: [],
+      totalAnswers: puzzle.questions[0].answers.length,
+      totalQuestions: puzzle.questions.length,
       timeRemainingMs,
     };
   }
@@ -179,7 +207,7 @@ export function getPlayerRoundState(roomId: string, playerId: string, room: Game
       attemptsLeft,
       timeRemainingMs,
     };
-  } else {
+  } else if (puzzle.type === 'puzzelronde') {
     const solvedGroups = tracker.solvedGroups.map((i) => ({
       words: puzzle.groups[i].words,
       answerCorrect: null as boolean | null, // we'll track this separately
@@ -195,6 +223,20 @@ export function getPlayerRoundState(roomId: string, playerId: string, room: Game
       solvedGroups,
       pendingAnswer: tracker.pendingGroupIndex !== null,
       attemptsLeft,
+      timeRemainingMs,
+    };
+  } else {
+    const qIdx = tracker.currentQuestionIndex;
+    const question = puzzle.questions[qIdx];
+    const found = tracker.foundAnswersPerQuestion.get(qIdx) ?? [];
+
+    return {
+      type: 'opendeur',
+      currentQuestionIndex: qIdx,
+      question: question.question,
+      foundAnswers: found,
+      totalAnswers: question.answers.length,
+      totalQuestions: puzzle.questions.length,
       timeRemainingMs,
     };
   }
@@ -218,6 +260,9 @@ export function submitGroupGuess(
 ): GroupGuessResult | null {
   const instance = activeGames.get(roomId);
   if (!instance) return null;
+
+  // Open Deur doesn't use group guesses
+  if (instance.puzzle.type === 'opendeur') return null;
 
   const tracker = instance.playerTrackers.get(playerId);
   if (!tracker || tracker.finished) return null;
@@ -360,6 +405,103 @@ export function submitAnswer(
   };
 }
 
+// ─── Submit Open Deur answer ───────────────────────────
+export interface OpenDeurAnswerResult {
+  correct: boolean;
+  matchedAnswer?: string;
+  playerFinished: boolean;
+  questionComplete: boolean;
+  previousAnswers?: string[]; // all answers for the completed question
+}
+
+export function submitOpenDeurAnswer(
+  roomId: string,
+  playerId: string,
+  answer: string,
+): OpenDeurAnswerResult | null {
+  const instance = activeGames.get(roomId);
+  if (!instance || instance.puzzle.type !== 'opendeur') return null;
+
+  const tracker = instance.playerTrackers.get(playerId);
+  if (!tracker || tracker.finished) return null;
+
+  const puzzle = instance.puzzle as OpenDeurPuzzle;
+  const qIdx = tracker.currentQuestionIndex;
+  const question = puzzle.questions[qIdx];
+  if (!question) return null;
+
+  const found = tracker.foundAnswersPerQuestion.get(qIdx) ?? [];
+
+  // Check if answer matches any of the remaining correct answers
+  for (const correctAnswer of question.answers) {
+    // Skip already found answers
+    if (found.some((f) => f.toLowerCase() === correctAnswer.toLowerCase())) continue;
+
+    if (fuzzyMatch(answer, correctAnswer)) {
+      found.push(correctAnswer);
+      tracker.foundAnswersPerQuestion.set(qIdx, found);
+      tracker.correctAnswers++;
+      tracker.score += 50;
+
+      const questionComplete = found.length >= question.answers.length;
+
+      // Auto-advance if all answers found
+      if (questionComplete) {
+        const isLastQuestion = qIdx >= puzzle.questions.length - 1;
+        if (isLastQuestion) {
+          tracker.finished = true;
+          tracker.endTime = Date.now();
+        } else {
+          tracker.currentQuestionIndex++;
+        }
+      }
+
+      return {
+        correct: true,
+        matchedAnswer: correctAnswer,
+        playerFinished: tracker.finished,
+        questionComplete,
+      };
+    }
+  }
+
+  // Wrong answer — no penalty for opendeur
+  return {
+    correct: false,
+    playerFinished: false,
+    questionComplete: false,
+  };
+}
+
+// ─── Skip Open Deur question ───────────────────────────
+export function skipOpenDeurQuestion(
+  roomId: string,
+  playerId: string,
+): { playerFinished: boolean; previousAnswers: string[] } | null {
+  const instance = activeGames.get(roomId);
+  if (!instance || instance.puzzle.type !== 'opendeur') return null;
+
+  const tracker = instance.playerTrackers.get(playerId);
+  if (!tracker || tracker.finished) return null;
+
+  const puzzle = instance.puzzle as OpenDeurPuzzle;
+  const qIdx = tracker.currentQuestionIndex;
+  const previousAnswers = puzzle.questions[qIdx].answers;
+  const isLastQuestion = qIdx >= puzzle.questions.length - 1;
+
+  if (isLastQuestion) {
+    tracker.finished = true;
+    tracker.endTime = Date.now();
+  } else {
+    tracker.currentQuestionIndex++;
+  }
+
+  return {
+    playerFinished: tracker.finished,
+    previousAnswers,
+  };
+}
+
 // ─── Fuzzy matching ────────────────────────────────────
 function fuzzyMatch(input: string, target: string): boolean {
   const a = input.trim().toLowerCase();
@@ -367,30 +509,31 @@ function fuzzyMatch(input: string, target: string): boolean {
 
   if (a === b) return true;
 
-  // Levenshtein distance ≤ 1
-  if (Math.abs(a.length - b.length) > 1) return false;
-  return levenshtein(a, b) <= 1;
+  // Levenshtein distance ≤ 1 for short words, ≤ 2 for longer words (6+ chars)
+  const maxDist = b.length >= 6 ? 2 : 1;
+  if (Math.abs(a.length - b.length) > maxDist) return false;
+  return levenshtein(a, b) <= maxDist;
 }
 
 function levenshtein(a: string, b: string): number {
   const m = a.length;
   const n = b.length;
-  const dp: number[][] = Array.from({ length: m + 1 }, () => Array(n + 1).fill(0));
-
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  let prev = Array.from({ length: n + 1 }, (_, j) => j);
+  let curr = new Array(n + 1).fill(0);
 
   for (let i = 1; i <= m; i++) {
+    curr[0] = i;
     for (let j = 1; j <= n; j++) {
-      dp[i][j] = Math.min(
-        dp[i - 1][j] + 1,
-        dp[i][j - 1] + 1,
-        dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      curr[j] = Math.min(
+        prev[j] + 1,
+        curr[j - 1] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
       );
     }
+    [prev, curr] = [curr, prev];
   }
 
-  return dp[m][n];
+  return prev[n];
 }
 
 // ─── Get player progress (for broadcasting) ───────────
@@ -400,9 +543,17 @@ export function getPlayerProgress(roomId: string): PlayerProgress[] {
 
   const progress: PlayerProgress[] = [];
   for (const [playerId, tracker] of instance.playerTrackers) {
+    let solvedCount = tracker.solvedGroups.length;
+    // For opendeur, count total answers found across all questions
+    if (instance.puzzle.type === 'opendeur') {
+      solvedCount = 0;
+      for (const answers of tracker.foundAnswersPerQuestion.values()) {
+        solvedCount += answers.length;
+      }
+    }
     progress.push({
       playerId,
-      solvedCount: tracker.solvedGroups.length,
+      solvedCount,
       finished: tracker.finished,
       score: tracker.score,
     });
@@ -413,7 +564,7 @@ export function getPlayerProgress(roomId: string): PlayerProgress[] {
 // ─── Check if round is complete (all players finished) ─
 export function isRoundComplete(roomId: string): boolean {
   const instance = activeGames.get(roomId);
-  if (!instance) return true;
+  if (!instance || instance.roundEnding) return false;
 
   for (const tracker of instance.playerTrackers.values()) {
     if (!tracker.finished) return false;
@@ -437,7 +588,9 @@ export function forceEndRound(roomId: string): void {
 // ─── Get round result ──────────────────────────────────
 export function getRoundResult(roomId: string, room: GameRoom): RoundResult | null {
   const instance = activeGames.get(roomId);
-  if (!instance) return null;
+  if (!instance || instance.roundEnding) return null;
+
+  instance.roundEnding = true;
 
   const results: PlayerRoundResult[] = [];
 
@@ -445,12 +598,26 @@ export function getRoundResult(roomId: string, room: GameRoom): RoundResult | nu
     const tracker = instance.playerTrackers.get(player.id);
     if (!tracker) continue;
 
+    let groupsFound = tracker.solvedGroups.length;
+    let correctAnswers = tracker.correctAnswers;
+    // For opendeur, groupsFound = number of questions where all answers found
+    if (instance.puzzle.type === 'opendeur') {
+      const puzzle = instance.puzzle as OpenDeurPuzzle;
+      groupsFound = 0;
+      for (let q = 0; q < puzzle.questions.length; q++) {
+        const found = tracker.foundAnswersPerQuestion.get(q) ?? [];
+        if (found.length >= puzzle.questions[q].answers.length) {
+          groupsFound++;
+        }
+      }
+    }
+
     results.push({
       playerId: player.id,
       nickname: player.nickname,
       avatarUrl: player.avatarUrl,
-      groupsFound: tracker.solvedGroups.length,
-      correctAnswers: tracker.correctAnswers,
+      groupsFound,
+      correctAnswers,
       wrongGuesses: tracker.wrongGuesses,
       timeUsedMs: (tracker.endTime ?? Date.now()) - tracker.startTime,
       roundScore: tracker.score,
@@ -467,7 +634,11 @@ export function getRoundResult(roomId: string, room: GameRoom): RoundResult | nu
     roundIndex: room.currentRoundIndex,
     roundType: instance.puzzle.type,
     results,
-    correctGroups: instance.puzzle.groups as any,
+    correctGroups: instance.puzzle.type === 'opendeur'
+      ? (instance.puzzle as OpenDeurPuzzle).questions
+      : instance.puzzle.type === 'connections'
+        ? (instance.puzzle as ConnectionsPuzzle).groups
+        : (instance.puzzle as PuzzelrondePuzzle).groups,
   };
 
   // Clean up game instance
@@ -536,4 +707,5 @@ export function cleanupGame(roomId: string): void {
   const instance = activeGames.get(roomId);
   if (instance?.timer) clearInterval(instance.timer);
   activeGames.delete(roomId);
+  usedPuzzles.delete(roomId);
 }

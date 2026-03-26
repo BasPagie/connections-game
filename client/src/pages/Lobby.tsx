@@ -69,7 +69,7 @@ export default function Lobby() {
 
   return (
     <div className="h-screen overflow-y-auto py-6 px-4">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         {/* Title centered */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -84,11 +84,10 @@ export default function Lobby() {
           </h1>
           <button
             onClick={() => setShowInfo(true)}
-            className="ml-2 w-8 h-8 rounded-full bg-brand-100 hover:bg-brand-200 text-brand-600 
-                       font-display font-bold text-sm transition-colors flex items-center justify-center"
-            title="Speluitleg"
+            className="ml-3 px-3 py-1 rounded-full bg-brand-100 hover:bg-brand-200 text-brand-600 
+                       font-display font-bold text-xs transition-colors"
           >
-            ?
+            📖 Uitleg
           </button>
         </motion.div>
 
@@ -204,59 +203,53 @@ export default function Lobby() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.85, y: 20 }}
               transition={{ type: "spring", damping: 20 }}
-              className="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full max-h-[85vh] overflow-y-auto"
+              className="bg-white rounded-3xl shadow-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 className="font-display font-black text-2xl text-gray-800 mb-6 text-center">
-                📖 Speluitleg
+              <h2 className="font-display font-black text-xl text-gray-800 mb-4 text-center">
+                📖 Hoe werkt het?
               </h2>
 
-              <div className="space-y-5">
-                <div>
-                  <h3 className="font-display font-bold text-lg text-blue-600 mb-2">
-                    🔗 Connections
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Je ziet 16 woorden op het scherm. Deze woorden zijn verdeeld
-                    in <strong>4 groepen van 4</strong> die iets met elkaar
-                    gemeen hebben. Selecteer 4 woorden die volgens jou bij
-                    dezelfde groep horen en bevestig je keuze. Je krijgt punten
-                    voor elke correct gevonden groep, maar verliest punten bij
-                    een foute gok!
-                  </p>
-                </div>
+              <div className="space-y-3 text-sm text-gray-600 leading-relaxed">
+                <GameModeCard
+                  icon="🔗"
+                  name="Connections"
+                  color="blue"
+                  short="16 woorden, 4 groepen. Ken je van de NYT."
+                  long="Gebaseerd op het spel Connections van de New York Times. Je ziet 16 woorden en moet ze in 4 groepen van 4 verdelen. Tik 4 woorden aan en bevestig. 100 punten per goede groep, -25 bij fout. Zit je er bijna? Dan kleuren de goed gekozen woorden geel als hint."
+                />
 
-                <div>
-                  <h3 className="font-display font-bold text-lg text-purple-600 mb-2">
-                    🧩 Puzzelronde
-                  </h3>
-                  <p className="text-sm text-gray-600 leading-relaxed">
-                    Geïnspireerd door De Slimste Mens! Je ziet 12 woorden
-                    verdeeld in <strong>3 groepen van 4</strong>. Selecteer
-                    eerst 4 woorden die bij elkaar horen — en raad dan het{" "}
-                    <strong>verbindende woord</strong> dat de groep beschrijft.
-                    Je krijgt extra punten als je het verbindende woord goed
-                    raadt!
-                  </p>
-                </div>
+                <GameModeCard
+                  icon="🧩"
+                  name="Puzzelronde"
+                  color="purple"
+                  short="Groepjes maken + verbindend woord raden."
+                  long="Spel die gespeeld wordt bij De Slimste Mens: 12 woorden in 3 groepen van 4. Eerst de groep selecteren, dan het verbindende woord typen. 100 punten per groep, 150 bonus voor het juiste woord. Typfoutjes mag."
+                />
 
-                <div>
-                  <h3 className="font-display font-bold text-lg text-orange-600 mb-2">
-                    ⚡ Tips
-                  </h3>
-                  <ul className="text-sm text-gray-600 leading-relaxed list-disc list-inside space-y-1">
-                    <li>Iedereen speelt tegelijk — snelheid telt!</li>
-                    <li>
-                      Bij een bijna-goed antwoord krijg je een hint (geel
-                      gemarkeerde woorden)
-                    </li>
+                <GameModeCard
+                  icon="🚪"
+                  name="Open Deur"
+                  color="amber"
+                  short="3 vragen, typ zoveel goede antwoorden als je kan."
+                  long="Ook van De Slimste Mens! 3 vragen met elk 4 juiste antwoorden. Typ ze zo snel mogelijk — 50 punten per goed antwoord. Geen straf voor fout, dus gewoon proberen. Vraag overslaan kan ook."
+                />
+
+                <div className="border-t border-gray-100 pt-3">
+                  <p className="font-display font-bold text-gray-700 mb-1.5">
+                    💡 Goed om te weten
+                  </p>
+                  <ul className="space-y-1 text-gray-500">
+                    <li>• Iedereen speelt tegelijk, dus snelheid telt</li>
+                    <li>• Eerder klaar = bonuspunten</li>
+                    <li>• Typfoutjes worden door de vingers gezien</li>
                   </ul>
                 </div>
               </div>
 
               <button
                 onClick={() => setShowInfo(false)}
-                className="btn-primary w-full mt-6"
+                className="btn-primary w-full mt-4"
               >
                 Begrepen! 👍
               </button>
@@ -265,5 +258,78 @@ export default function Lobby() {
         )}
       </AnimatePresence>
     </div>
+  );
+}
+
+// ─── Expandable game mode card for the info modal ──────
+const BG_COLORS: Record<string, string> = {
+  blue: "bg-blue-50",
+  purple: "bg-purple-50",
+  amber: "bg-amber-50",
+};
+const TEXT_COLORS: Record<string, string> = {
+  blue: "text-blue-700",
+  purple: "text-purple-700",
+  amber: "text-amber-700",
+};
+
+function GameModeCard({
+  icon,
+  name,
+  color,
+  short,
+  long,
+}: {
+  icon: string;
+  name: string;
+  color: string;
+  short: string;
+  long: string;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <button
+      onClick={() => setExpanded(!expanded)}
+      className={`w-full text-left rounded-xl p-3 transition-all ${BG_COLORS[color]}`}
+    >
+      <div className="flex gap-3 items-start">
+        <span className="text-lg shrink-0">{icon}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className={`font-display font-bold ${TEXT_COLORS[color]}`}>
+              {name}
+            </span>
+            <svg
+              className={`w-3.5 h-3.5 text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
+          </div>
+          <p className="text-gray-600 mt-0.5">{short}</p>
+          <AnimatePresence>
+            {expanded && (
+              <motion.p
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="text-gray-500 mt-2 overflow-hidden"
+              >
+                {long}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </button>
   );
 }

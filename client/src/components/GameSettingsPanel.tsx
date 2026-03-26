@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type {
   GameSettings,
   RoundConfig,
@@ -11,59 +13,130 @@ interface GameSettingsPanelProps {
   isHost: boolean;
 }
 
+const ROUND_TYPES: {
+  type: RoundType;
+  icon: string;
+  label: string;
+  color: string;
+  activeBg: string;
+}[] = [
+  {
+    type: "connections",
+    icon: "🔗",
+    label: "Connections",
+    color: "text-blue-700",
+    activeBg: "bg-blue-500",
+  },
+  {
+    type: "puzzelronde",
+    icon: "🧩",
+    label: "Puzzelronde",
+    color: "text-purple-700",
+    activeBg: "bg-purple-500",
+  },
+  {
+    type: "opendeur",
+    icon: "🚪",
+    label: "Open Deur",
+    color: "text-amber-700",
+    activeBg: "bg-amber-500",
+  },
+];
+
+const DIFFICULTIES: { value: PuzzleDifficulty; label: string; dot: string }[] =
+  [
+    { value: "easy", label: "Makkelijk", dot: "bg-green-400" },
+    { value: "medium", label: "Gemiddeld", dot: "bg-yellow-400" },
+    { value: "hard", label: "Moeilijk", dot: "bg-red-400" },
+  ];
+
+const TIME_OPTIONS: { value: number | null; label: string }[] = [
+  { value: null, label: "Geen" },
+  { value: 60, label: "1 min" },
+  { value: 90, label: "1.5 min" },
+  { value: 120, label: "2 min" },
+  { value: 180, label: "3 min" },
+  { value: 300, label: "5 min" },
+];
+
+function getRoundMeta(type: RoundType) {
+  return ROUND_TYPES.find((r) => r.type === type)!;
+}
+
+function getDiffMeta(d: PuzzleDifficulty) {
+  return DIFFICULTIES.find((x) => x.value === d)!;
+}
+
 export default function GameSettingsPanel({
   settings,
   onChange,
   isHost,
 }: GameSettingsPanelProps) {
+  // ─── Non-host read-only view ─────────────────────────
   if (!isHost) {
     return (
       <div className="space-y-4">
         <h3 className="font-display font-bold text-lg text-gray-700">
           Spelinstellingen
         </h3>
-        <div className="bg-gray-50 rounded-xl p-4 space-y-2 text-sm text-gray-600">
-          <p>
-            <strong>Rondes:</strong> {settings.rounds.length}
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {settings.rounds.map((r, i) => (
-              <span
-                key={i}
-                className={`px-2 py-1 rounded-lg text-xs font-medium
-                ${
-                  r.type === "connections"
-                    ? "bg-blue-100 text-blue-700"
-                    : "bg-purple-100 text-purple-700"
-                }`}
-              >
-                Ronde {i + 1}:{" "}
-                {r.type === "connections" ? "Connections" : "Puzzelronde"}
-                {" · "}
-                {r.difficulty === "easy"
-                  ? "Makkelijk"
-                  : r.difficulty === "hard"
-                    ? "Moeilijk"
-                    : "Gemiddeld"}
-              </span>
-            ))}
+        <div className="bg-gray-50 rounded-xl p-4 space-y-3 text-sm text-gray-600">
+          <div>
+            <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+              Rondes
+            </span>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {settings.rounds.map((r, i) => {
+                const meta = getRoundMeta(r.type);
+                const diff = getDiffMeta(r.difficulty);
+                return (
+                  <span
+                    key={i}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium
+                      ${
+                        r.type === "connections"
+                          ? "bg-blue-50 text-blue-700"
+                          : r.type === "puzzelronde"
+                            ? "bg-purple-50 text-purple-700"
+                            : "bg-amber-50 text-amber-700"
+                      }`}
+                  >
+                    {meta.icon} {meta.label}
+                    <span className={`w-1.5 h-1.5 rounded-full ${diff.dot}`} />
+                  </span>
+                );
+              })}
+            </div>
           </div>
-          <p>
-            <strong>Pogingen:</strong>{" "}
-            {settings.attemptsMode === "limited"
-              ? `${settings.maxAttempts} levens`
-              : "Onbeperkt"}
-          </p>
-          <p>
-            <strong>Tijdslimiet:</strong>{" "}
-            {settings.timeLimitSeconds
-              ? `${settings.timeLimitSeconds}s`
-              : "Geen"}
-          </p>
-          <p>
-            <strong>Host:</strong>{" "}
-            {settings.hostPlays ? "Speelt mee" : "Kijkt toe"}
-          </p>
+          <div className="flex gap-6">
+            <div>
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                Pogingen
+              </span>
+              <p className="font-medium mt-0.5">
+                {settings.attemptsMode === "limited"
+                  ? `${settings.maxAttempts} ❤️`
+                  : "♾️ Onbeperkt"}
+              </p>
+            </div>
+            <div>
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                Tijd
+              </span>
+              <p className="font-medium mt-0.5">
+                {settings.timeLimitSeconds
+                  ? `${settings.timeLimitSeconds >= 60 ? `${settings.timeLimitSeconds / 60} min` : `${settings.timeLimitSeconds}s`}`
+                  : "Geen"}
+              </p>
+            </div>
+            <div>
+              <span className="text-xs font-medium text-gray-400 uppercase tracking-wide">
+                Host
+              </span>
+              <p className="font-medium mt-0.5">
+                {settings.hostPlays ? "🎮 Speelt mee" : "👀 Kijkt toe"}
+              </p>
+            </div>
+          </div>
         </div>
         <p className="text-xs text-gray-400 italic">
           Alleen de host kan instellingen wijzigen.
@@ -72,21 +145,42 @@ export default function GameSettingsPanel({
     );
   }
 
+  // ─── Host editable view ──────────────────────────────
+  return <HostSettingsEditor settings={settings} onChange={onChange} />;
+}
+
+// ─── Host Editor ───────────────────────────────────────
+function HostSettingsEditor({
+  settings,
+  onChange,
+}: {
+  settings: GameSettings;
+  onChange: (s: GameSettings) => void;
+}) {
+  const [editingRound, setEditingRound] = useState<number | null>(null);
+
   const updateRounds = (rounds: RoundConfig[]) => {
     onChange({ ...settings, rounds });
   };
 
   const addRound = () => {
     if (settings.rounds.length >= 5) return;
-    updateRounds([
+    const newRounds = [
       ...settings.rounds,
-      { type: "connections", difficulty: "medium" },
-    ]);
+      {
+        type: "connections" as RoundType,
+        difficulty: "medium" as PuzzleDifficulty,
+      },
+    ];
+    updateRounds(newRounds);
+    setEditingRound(newRounds.length - 1);
   };
 
-  const removeRound = () => {
+  const removeRound = (index: number) => {
     if (settings.rounds.length <= 1) return;
-    updateRounds(settings.rounds.slice(0, -1));
+    const newRounds = settings.rounds.filter((_, i) => i !== index);
+    updateRounds(newRounds);
+    setEditingRound(null);
   };
 
   const setRoundType = (index: number, type: RoundType) => {
@@ -102,198 +196,274 @@ export default function GameSettingsPanel({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <h3 className="font-display font-bold text-lg text-gray-700">
         Spelinstellingen
       </h3>
 
-      {/* Number of rounds */}
-      <div>
-        <label className="block text-sm font-medium text-gray-600 mb-2">
-          Aantal rondes
-        </label>
-        <div className="flex items-center gap-3">
-          <button
-            onClick={removeRound}
-            disabled={settings.rounds.length <= 1}
-            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center
-                       text-xl font-bold text-gray-600 disabled:opacity-30 transition-all"
-          >
-            −
-          </button>
-          <span className="font-display font-bold text-2xl text-brand-600 w-8 text-center">
-            {settings.rounds.length}
-          </span>
-          <button
-            onClick={addRound}
-            disabled={settings.rounds.length >= 5}
-            className="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 flex items-center justify-center
-                       text-xl font-bold text-gray-600 disabled:opacity-30 transition-all"
-          >
-            +
-          </button>
-        </div>
-      </div>
+      {/* ── SECTION: Rounds ─────────────────────────── */}
+      <Section label="Rondes">
+        <div className="space-y-2">
+          {settings.rounds.map((round, i) => {
+            const meta = getRoundMeta(round.type);
+            const diff = getDiffMeta(round.difficulty);
+            const isEditing = editingRound === i;
 
-      {/* Round types */}
-      <div>
-        <label className="block text-sm font-medium text-gray-600 mb-2">
-          Type & moeilijkheid per ronde
-        </label>
-        <div className="space-y-3">
-          {settings.rounds.map((round, i) => (
-            <div key={i} className="space-y-1.5">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-display font-bold text-gray-500 w-20">
-                  Ronde {i + 1}
-                </span>
-                <div className="flex gap-1 flex-1">
-                  <button
-                    onClick={() => setRoundType(i, "connections")}
-                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all
-                      ${
-                        round.type === "connections"
-                          ? "bg-blue-500 text-white shadow-md"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
+            return (
+              <div key={i}>
+                {/* Collapsed round card */}
+                <button
+                  onClick={() => setEditingRound(isEditing ? null : i)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all
+                    ${isEditing ? "bg-gray-100 ring-2 ring-brand-300" : "bg-gray-50 hover:bg-gray-100"}`}
+                >
+                  <span className="text-lg">{meta.icon}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-display font-bold text-sm text-gray-700">
+                      {meta.label}
+                    </span>
+                    <span className="mx-2 text-gray-300">·</span>
+                    <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${diff.dot}`}
+                      />
+                      {diff.label}
+                    </span>
+                  </div>
+                  <span className="text-xs text-gray-400 font-display font-bold">
+                    {i + 1}/{settings.rounds.length}
+                  </span>
+                  {settings.rounds.length > 1 && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeRound(i);
+                      }}
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 
+                                 hover:bg-red-50 hover:text-red-400 transition-all"
+                      title="Ronde verwijderen"
+                    >
+                      <svg
+                        className="w-3.5 h-3.5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        strokeWidth={2}
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  )}
+                  <svg
+                    className={`w-4 h-4 text-gray-400 transition-transform ${isEditing ? "rotate-180" : ""}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
                   >
-                    🔗 Connections
-                  </button>
-                  <button
-                    onClick={() => setRoundType(i, "puzzelronde")}
-                    className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all
-                      ${
-                        round.type === "puzzelronde"
-                          ? "bg-purple-500 text-white shadow-md"
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                  >
-                    🧩 Puzzelronde
-                  </button>
-                </div>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                {/* Expanded editor */}
+                <AnimatePresence>
+                  {isEditing && (
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="pt-2 pb-1 px-1 space-y-3">
+                        {/* Type selector */}
+                        <div className="flex gap-1.5">
+                          {ROUND_TYPES.map((rt) => (
+                            <button
+                              key={rt.type}
+                              onClick={() => setRoundType(i, rt.type)}
+                              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all
+                                ${
+                                  round.type === rt.type
+                                    ? `${rt.activeBg} text-white shadow-md`
+                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                }`}
+                            >
+                              {rt.icon} {rt.label}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Difficulty selector */}
+                        <div className="flex gap-1.5">
+                          {DIFFICULTIES.map((d) => (
+                            <button
+                              key={d.value}
+                              onClick={() => setRoundDifficulty(i, d.value)}
+                              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5
+                                ${
+                                  round.difficulty === d.value
+                                    ? "bg-gray-800 text-white shadow-md"
+                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                }`}
+                            >
+                              <span
+                                className={`w-2 h-2 rounded-full ${d.dot}`}
+                              />
+                              {d.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <div className="flex items-center gap-2 ml-[5.5rem]">
-                {(["easy", "medium", "hard"] as PuzzleDifficulty[]).map((d) => (
-                  <button
-                    key={d}
-                    onClick={() => setRoundDifficulty(i, d)}
-                    className={`flex-1 py-1 px-2 rounded-lg text-xs font-medium transition-all
-                      ${
-                        round.difficulty === d
-                          ? d === "easy"
-                            ? "bg-green-500 text-white shadow-md"
-                            : d === "medium"
-                              ? "bg-yellow-500 text-white shadow-md"
-                              : "bg-red-500 text-white shadow-md"
-                          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                      }`}
-                  >
-                    {d === "easy"
-                      ? "Makkelijk"
-                      : d === "medium"
-                        ? "Gemiddeld"
-                        : "Moeilijk"}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+            );
+          })}
 
-      {/* Attempts mode */}
-      <div>
-        <label className="block text-sm font-medium text-gray-600 mb-2">
-          Pogingen
-        </label>
-        <div className="flex gap-2">
-          <button
-            onClick={() =>
-              onChange({
-                ...settings,
-                attemptsMode: "limited",
-                maxAttempts: settings.maxAttempts || 4,
-              })
-            }
-            className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all
-              ${
-                settings.attemptsMode === "limited"
-                  ? "bg-red-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-          >
-            ❤️ Levens
-          </button>
-          <button
-            onClick={() => onChange({ ...settings, attemptsMode: "unlimited" })}
-            className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all
-              ${
-                settings.attemptsMode === "unlimited"
-                  ? "bg-green-500 text-white shadow-md"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-          >
-            ♾️ Onbeperkt
-          </button>
-        </div>
-        {settings.attemptsMode === "limited" && (
-          <div className="flex items-center gap-2 mt-2">
-            {[4, 5, 6, 7, 8, 9, 10].map((n) => (
-              <button
-                key={n}
-                onClick={() => onChange({ ...settings, maxAttempts: n })}
-                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all
-                  ${
-                    settings.maxAttempts === n
-                      ? "bg-red-500 text-white shadow-md"
-                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                  }`}
-              >
-                {n} ❤️
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Time limit */}
-      <div>
-        <label className="block text-sm font-medium text-gray-600 mb-2">
-          Tijdslimiet
-        </label>
-        <div className="grid grid-cols-3 gap-2">
-          {[null, 60, 90, 120, 180, 300].map((seconds) => (
+          {/* Add round */}
+          {settings.rounds.length < 5 && (
             <button
-              key={String(seconds)}
+              onClick={addRound}
+              className="w-full py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm font-display 
+                         font-bold text-gray-400 hover:border-brand-300 hover:text-brand-500 transition-all"
+            >
+              + Ronde toevoegen
+            </button>
+          )}
+        </div>
+      </Section>
+
+      {/* ── SECTION: Lives & Time ───────────────────── */}
+      <Section label="Regels">
+        {/* Attempts */}
+        <div className="space-y-2">
+          <div className="flex gap-2">
+            <button
               onClick={() =>
-                onChange({ ...settings, timeLimitSeconds: seconds })
+                onChange({
+                  ...settings,
+                  attemptsMode: "limited",
+                  maxAttempts: settings.maxAttempts || 4,
+                })
               }
-              className={`py-2 px-3 rounded-xl text-sm font-medium transition-all
+              className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all
                 ${
-                  settings.timeLimitSeconds === seconds
-                    ? "bg-brand-500 text-white shadow-md"
+                  settings.attemptsMode === "limited"
+                    ? "bg-red-500 text-white shadow-md"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
             >
-              {seconds === null
-                ? "⏱️ Geen"
-                : seconds < 60
-                  ? `${seconds}s`
-                  : `${seconds / 60}min`}
+              ❤️ Levens
             </button>
-          ))}
-        </div>
-      </div>
+            <button
+              onClick={() =>
+                onChange({ ...settings, attemptsMode: "unlimited" })
+              }
+              className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all
+                ${
+                  settings.attemptsMode === "unlimited"
+                    ? "bg-green-500 text-white shadow-md"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+            >
+              ♾️ Onbeperkt
+            </button>
+          </div>
 
-      {/* Host plays or spectates */}
-      <div>
-        <label className="block text-sm font-medium text-gray-600 mb-2">
-          Host doet mee?
-        </label>
+          {/* Lives stepper */}
+          <AnimatePresence>
+            {settings.attemptsMode === "limited" && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="flex items-center justify-center gap-4 py-2">
+                  <button
+                    onClick={() =>
+                      onChange({
+                        ...settings,
+                        maxAttempts: Math.max(1, settings.maxAttempts - 1),
+                      })
+                    }
+                    disabled={settings.maxAttempts <= 1}
+                    className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center
+                               text-lg font-bold text-gray-500 disabled:opacity-30 transition-all"
+                  >
+                    −
+                  </button>
+                  <div className="flex items-center gap-1">
+                    <span className="font-display font-black text-2xl text-red-500 w-8 text-center">
+                      {settings.maxAttempts}
+                    </span>
+                    <span className="text-red-400 text-lg">❤️</span>
+                  </div>
+                  <button
+                    onClick={() =>
+                      onChange({
+                        ...settings,
+                        maxAttempts: Math.min(10, settings.maxAttempts + 1),
+                      })
+                    }
+                    disabled={settings.maxAttempts >= 10}
+                    className="w-9 h-9 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center
+                               text-lg font-bold text-gray-500 disabled:opacity-30 transition-all"
+                  >
+                    +
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-gray-100 my-3" />
+
+        {/* Time limit */}
+        <div>
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-2 block">
+            Tijdslimiet
+          </span>
+          <div className="flex gap-1.5 flex-wrap">
+            {TIME_OPTIONS.map((opt) => (
+              <button
+                key={String(opt.value)}
+                onClick={() =>
+                  onChange({ ...settings, timeLimitSeconds: opt.value })
+                }
+                className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all
+                  ${
+                    settings.timeLimitSeconds === opt.value
+                      ? "bg-brand-500 text-white shadow-md"
+                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  }`}
+              >
+                {opt.value === null ? "⏱️ " : ""}
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </Section>
+
+      {/* ── SECTION: Host role ──────────────────────── */}
+      <Section label="Host">
         <div className="flex gap-2">
           <button
             onClick={() => onChange({ ...settings, hostPlays: true })}
-            className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all
+            className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all
               ${
                 settings.hostPlays
                   ? "bg-green-500 text-white shadow-md"
@@ -304,7 +474,7 @@ export default function GameSettingsPanel({
           </button>
           <button
             onClick={() => onChange({ ...settings, hostPlays: false })}
-            className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all
+            className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all
               ${
                 !settings.hostPlays
                   ? "bg-orange-500 text-white shadow-md"
@@ -314,6 +484,26 @@ export default function GameSettingsPanel({
             👀 Toekijken
           </button>
         </div>
+      </Section>
+    </div>
+  );
+}
+
+// ─── Section wrapper ───────────────────────────────────
+function Section({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+        {label}
+      </span>
+      <div className="bg-gray-50/50 rounded-2xl border border-gray-100 p-3">
+        {children}
       </div>
     </div>
   );

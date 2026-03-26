@@ -1,10 +1,12 @@
 import { v4 as uuidv4 } from 'uuid';
+import { randomInt } from 'crypto';
 import type {
   GameRoom,
   Player,
   GameSettings,
-  DEFAULT_SETTINGS,
 } from '../../shared/types.js';
+
+const MAX_PLAYERS_PER_ROOM = 20;
 
 // In-memory room storage
 const rooms = new Map<string, GameRoom>();
@@ -32,10 +34,10 @@ export function createRoom(socketId: string, nickname: string, avatarUrl: string
       rounds: [
         { type: 'connections', difficulty: 'medium' },
         { type: 'puzzelronde', difficulty: 'medium' },
-        { type: 'connections', difficulty: 'medium' },
+        { type: 'opendeur', difficulty: 'medium' },
       ],
       attemptsMode: 'limited',
-      maxAttempts: 4,
+      maxAttempts: 6,
       timeLimitSeconds: 120,
       hostControl: true,
       hostPlays: true,
@@ -54,6 +56,7 @@ export function joinRoom(socketId: string, roomId: string, nickname: string, ava
   const room = rooms.get(roomId);
   if (!room) return null;
   if (room.status !== 'lobby') return null;
+  if (room.players.length >= MAX_PLAYERS_PER_ROOM) return null;
 
   const playerId = uuidv4();
   const player: Player = {
@@ -136,13 +139,15 @@ export function getSocketIdForPlayer(roomId: string, playerId: string): string |
 }
 
 function generateRoomId(): string {
-  // Generate a 6-character alphanumeric code
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1 to avoid confusion
   let code = '';
   for (let i = 0; i < 6; i++) {
-    code += chars[Math.floor(Math.random() * chars.length)];
+    code += chars[randomInt(chars.length)];
   }
-  // Ensure uniqueness
-  if (rooms.has(code)) return generateRoomId();
+  // Ensure uniqueness (with retry limit)
+  if (rooms.has(code)) {
+    // In the astronomically unlikely event of collision, try once more
+    return generateRoomId();
+  }
   return code;
 }

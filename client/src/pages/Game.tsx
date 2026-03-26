@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useSocket } from "../context/SocketContext";
@@ -6,12 +6,14 @@ import { useGame } from "../context/GameContext";
 import { useSocketEvents } from "../hooks/useSocketEvents";
 import ConnectionsGame from "../components/ConnectionsGame";
 import PuzzelrondeGame from "../components/PuzzelrondeGame";
+import OpenDeurGame from "../components/OpenDeurGame";
 import TimerBar from "../components/TimerBar";
 import ProgressSidebar from "../components/ProgressSidebar";
 import RoundEndOverlay from "../components/RoundEndOverlay";
 import type {
   ConnectionsRoundState,
   PuzzelrondeRoundState,
+  OpenDeurRoundState,
 } from "shared/types";
 
 export default function Game() {
@@ -21,19 +23,6 @@ export default function Game() {
   const navigate = useNavigate();
   const socket = useSocket();
   const { state } = useGame();
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-
-  // Listen for time updates
-  useEffect(() => {
-    if (!socket) return;
-    const handler = ({ timeRemainingMs }: { timeRemainingMs: number }) => {
-      setTimeRemaining(timeRemainingMs);
-    };
-    socket.on("time-update", handler);
-    return () => {
-      socket.off("time-update", handler);
-    };
-  }, [socket]);
 
   // Navigate to results when game ends
   useEffect(() => {
@@ -50,6 +39,16 @@ export default function Game() {
   const handleSubmitAnswer = (answer: string) => {
     if (!socket) return;
     socket.emit("submit-answer", { answer });
+  };
+
+  const handleSubmitOpenDeurAnswer = (answer: string) => {
+    if (!socket) return;
+    socket.emit("submit-opendeur-answer", { answer });
+  };
+
+  const handleSkipQuestion = () => {
+    if (!socket) return;
+    socket.emit("skip-question");
   };
 
   const handleNextRound = () => {
@@ -118,7 +117,12 @@ export default function Game() {
   const roundConfig = state.room.settings.rounds[state.room.currentRoundIndex];
   const totalRounds = state.room.settings.rounds.length;
   const currentRound = state.room.currentRoundIndex + 1;
-  const totalGroups = state.roundState.type === "connections" ? 4 : 3;
+  const totalGroups =
+    state.roundState.type === "connections"
+      ? 4
+      : state.roundState.type === "puzzelronde"
+        ? 3
+        : 12; // opendeur: 3 questions × 4 answers
   const isLastRound = state.room.currentRoundIndex >= totalRounds - 1;
   const isSpectating = state.player?.isHost && !state.room.settings.hostPlays;
 
@@ -137,12 +141,16 @@ export default function Game() {
               ${
                 roundConfig?.type === "connections"
                   ? "bg-blue-100 text-blue-700"
-                  : "bg-purple-100 text-purple-700"
+                  : roundConfig?.type === "puzzelronde"
+                    ? "bg-purple-100 text-purple-700"
+                    : "bg-amber-100 text-amber-700"
               }`}
             >
               {roundConfig?.type === "connections"
                 ? "🔗 Connections"
-                : "🧩 Puzzelronde"}
+                : roundConfig?.type === "puzzelronde"
+                  ? "🧩 Puzzelronde"
+                  : "🚪 Open Deur"}
             </span>
             <span className="text-sm text-gray-400 font-display">
               Ronde {currentRound} van {totalRounds}
@@ -162,7 +170,7 @@ export default function Game() {
             <TimerBar
               totalSeconds={state.room.settings.timeLimitSeconds ?? 120}
               timeRemainingMs={
-                timeRemaining ?? state.roundState.timeRemainingMs
+                state.timeRemainingMs ?? state.roundState.timeRemainingMs
               }
             />
 
@@ -189,12 +197,18 @@ export default function Game() {
                     onSubmitGroup={handleSubmitGroup}
                     hintWords={state.hintWords}
                   />
-                ) : (
+                ) : state.roundState.type === "puzzelronde" ? (
                   <PuzzelrondeGame
                     roundState={state.roundState as PuzzelrondeRoundState}
                     onSubmitGroup={handleSubmitGroup}
                     onSubmitAnswer={handleSubmitAnswer}
                     hintWords={state.hintWords}
+                  />
+                ) : (
+                  <OpenDeurGame
+                    roundState={state.roundState as OpenDeurRoundState}
+                    onSubmitAnswer={handleSubmitOpenDeurAnswer}
+                    onSkipQuestion={handleSkipQuestion}
                   />
                 )}
               </>

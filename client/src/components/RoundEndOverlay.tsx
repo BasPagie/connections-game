@@ -4,6 +4,7 @@ import type {
   RoundResult,
   ConnectionsGroup,
   PuzzelrondeGroup,
+  OpenDeurQuestion,
 } from "shared/types";
 
 interface RoundEndOverlayProps {
@@ -52,7 +53,9 @@ export default function RoundEndOverlay({
         <p className="text-center text-sm text-gray-500 mb-6">
           {result.roundType === "connections"
             ? "🔗 Connections"
-            : "🧩 Puzzelronde"}
+            : result.roundType === "puzzelronde"
+              ? "🧩 Puzzelronde"
+              : "🚪 Open Deur"}
         </p>
 
         {/* Rankings */}
@@ -93,15 +96,24 @@ export default function RoundEndOverlay({
                     {r.nickname}
                   </span>
                   <div className="flex gap-3 text-xs text-gray-500 mt-0.5">
-                    <span>
-                      🎯 {r.groupsFound}{" "}
-                      {r.groupsFound === 1 ? "groep" : "groepen"}
-                    </span>
-                    {r.correctAnswers > 0 && (
+                    {result.roundType === "opendeur" ? (
                       <span>
                         💡 {r.correctAnswers}{" "}
-                        {r.correctAnswers === 1 ? "woord" : "woorden"}
+                        {r.correctAnswers === 1 ? "antwoord" : "antwoorden"}
                       </span>
+                    ) : (
+                      <>
+                        <span>
+                          🎯 {r.groupsFound}{" "}
+                          {r.groupsFound === 1 ? "groep" : "groepen"}
+                        </span>
+                        {r.correctAnswers > 0 && (
+                          <span>
+                            💡 {r.correctAnswers}{" "}
+                            {r.correctAnswers === 1 ? "woord" : "woorden"}
+                          </span>
+                        )}
+                      </>
                     )}
                     {r.wrongGuesses > 0 && (
                       <span>❌ {r.wrongGuesses} fout</span>
@@ -141,23 +153,37 @@ export default function RoundEndOverlay({
                 <div className="space-y-2 mt-2">
                   {result.correctGroups.map((group, i) => {
                     const isConnections = result.roundType === "connections";
+                    const isOpenDeur = result.roundType === "opendeur";
                     const cGroup = group as ConnectionsGroup;
                     const pGroup = group as PuzzelrondeGroup;
+                    const oGroup = group as OpenDeurQuestion;
 
                     return (
                       <div
                         key={i}
-                        className={`p-3 rounded-xl ${isConnections ? DIFFICULTY_COLORS[cGroup.difficulty] || "bg-gray-100" : "bg-gray-100"}`}
+                        className={`p-3 rounded-xl ${
+                          isConnections
+                            ? DIFFICULTY_COLORS[cGroup.difficulty] ||
+                              "bg-gray-100"
+                            : isOpenDeur
+                              ? "bg-amber-50"
+                              : "bg-gray-100"
+                        }`}
                       >
                         <p className="font-display font-bold text-sm mb-1">
                           {isConnections
                             ? cGroup.label
-                            : `Verbindend woord: ${pGroup.answer}`}
+                            : isOpenDeur
+                              ? oGroup.question
+                              : `Verbindend woord: ${pGroup.answer}`}
                         </p>
                         <p className="text-xs opacity-75">
-                          {(isConnections ? cGroup.words : pGroup.words).join(
-                            " · ",
-                          )}
+                          {isOpenDeur
+                            ? oGroup.answers.join(" · ")
+                            : (isConnections
+                                ? cGroup.words
+                                : pGroup.words
+                              ).join(" · ")}
                         </p>
                       </div>
                     );
