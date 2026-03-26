@@ -137,7 +137,7 @@ const connectionsPuzzles: ConnectionsPuzzle[] = [
       { label: 'Voetbalclubs (NL)', words: ['Ajax', 'Feyenoord', 'PSV', 'Twente'], difficulty: 1 },
       { label: 'Dieren in het bos', words: ['Hert', 'Vos', 'Uil', 'Das'], difficulty: 2 },
       { label: 'Nederlandse rivieren', words: ['Rijn', 'Maas', 'Waal', 'IJssel'], difficulty: 3 },
-      { label: 'Naam + dier', words: ['Rob', 'Mees', 'Mus', 'Lam'], difficulty: 4 },
+      { label: 'Naam + dier', words: ['Rob', 'Mees', 'Arend', 'Beer'], difficulty: 4 },
     ],
   },
   {
