@@ -160,10 +160,10 @@ export default function Results() {
 
         {/* Podium reveal */}
         <div
-          className={`flex items-end justify-center gap-6 ${showLeaderboard ? "mb-10" : "mb-0"} min-h-[340px]`}
+          className={`flex items-end justify-center gap-2 sm:gap-6 ${showLeaderboard ? "mb-10" : "mb-0"} min-h-[280px] sm:min-h-[340px]`}
         >
           {/* 2nd place */}
-          <div className="text-center w-32">
+          <div className="text-center w-24 sm:w-32">
             <AnimatePresence>
               {showSecond && top3[1] && (
                 <motion.div
@@ -172,8 +172,8 @@ export default function Results() {
                   transition={{ type: "spring", damping: 12 }}
                 >
                   <PodiumPlayer player={top3[1]} medal="🥈" />
-                  <div className="bg-gray-300 rounded-t-2xl w-32 h-28 flex items-center justify-center mt-2">
-                    <span className="font-display font-black text-4xl text-white">
+                  <div className="bg-gray-300 rounded-t-2xl w-24 sm:w-32 h-20 sm:h-28 flex items-center justify-center mt-2">
+                    <span className="font-display font-black text-3xl sm:text-4xl text-white">
                       2
                     </span>
                   </div>
@@ -183,7 +183,7 @@ export default function Results() {
           </div>
 
           {/* 1st place */}
-          <div className="text-center w-36">
+          <div className="text-center w-28 sm:w-36">
             <AnimatePresence>
               {showFirst && top3[0] && (
                 <motion.div
@@ -193,7 +193,7 @@ export default function Results() {
                 >
                   <PodiumPlayer player={top3[0]} medal="🥇" isWinner />
                   <motion.div
-                    className="bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-t-2xl w-36 h-36 
+                    className="bg-gradient-to-b from-yellow-400 to-yellow-500 rounded-t-2xl w-28 sm:w-36 h-28 sm:h-36 
                                 flex items-center justify-center mt-2 shadow-lg"
                     animate={{
                       boxShadow: [
@@ -204,7 +204,7 @@ export default function Results() {
                     }}
                     transition={{ duration: 1.5, repeat: Infinity }}
                   >
-                    <span className="font-display font-black text-5xl text-white">
+                    <span className="font-display font-black text-4xl sm:text-5xl text-white">
                       1
                     </span>
                   </motion.div>
@@ -214,7 +214,7 @@ export default function Results() {
           </div>
 
           {/* 3rd place */}
-          <div className="text-center w-32">
+          <div className="text-center w-24 sm:w-32">
             <AnimatePresence>
               {showThird && top3[2] && (
                 <motion.div
@@ -223,8 +223,8 @@ export default function Results() {
                   transition={{ type: "spring", damping: 12 }}
                 >
                   <PodiumPlayer player={top3[2]} medal="🥉" />
-                  <div className="bg-orange-300 rounded-t-2xl w-32 h-20 flex items-center justify-center mt-2">
-                    <span className="font-display font-black text-4xl text-white">
+                  <div className="bg-orange-300 rounded-t-2xl w-24 sm:w-32 h-16 sm:h-20 flex items-center justify-center mt-2">
+                    <span className="font-display font-black text-3xl sm:text-4xl text-white">
                       3
                     </span>
                   </div>
@@ -347,14 +347,18 @@ function PodiumPlayer({
 
   return (
     <div className="flex flex-col items-center">
-      <span className="text-4xl mb-1">{medal}</span>
+      <span className="text-3xl sm:text-4xl mb-1">{medal}</span>
       <div
         className={`rounded-full flex items-center justify-center overflow-hidden border-4 
-        ${isWinner ? "w-24 h-24 border-yellow-400 shadow-lg" : "w-20 h-20 border-gray-300"}
+        ${isWinner ? "w-16 h-16 sm:w-24 sm:h-24 border-yellow-400 shadow-lg" : "w-14 h-14 sm:w-20 sm:h-20 border-gray-300"}
         bg-white`}
       >
         {isEmoji ? (
-          <span className={isWinner ? "text-5xl" : "text-4xl"}>
+          <span
+            className={
+              isWinner ? "text-3xl sm:text-5xl" : "text-2xl sm:text-4xl"
+            }
+          >
             {player.avatarUrl}
           </span>
         ) : (
@@ -365,10 +369,10 @@ function PodiumPlayer({
           />
         )}
       </div>
-      <p className="font-display font-bold text-gray-800 mt-1 max-w-28 truncate">
+      <p className="font-display font-bold text-xs sm:text-sm text-gray-800 mt-1 max-w-28 sm:max-w-32 text-center break-words leading-tight">
         {player.nickname}
       </p>
-      <p className="font-display font-black text-lg text-brand-600">
+      <p className="font-display font-black text-base sm:text-lg text-brand-600">
         {player.totalScore}
       </p>
     </div>

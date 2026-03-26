@@ -212,9 +212,17 @@ function HostSettingsEditor({
             return (
               <div key={i}>
                 {/* Collapsed round card */}
-                <button
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={() => setEditingRound(isEditing ? null : i)}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      setEditingRound(isEditing ? null : i);
+                    }
+                  }}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer
                     ${isEditing ? "bg-gray-100 ring-2 ring-brand-300" : "bg-gray-50 hover:bg-gray-100"}`}
                 >
                   <span className="text-lg">{meta.icon}</span>
@@ -271,7 +279,7 @@ function HostSettingsEditor({
                       d="M19 9l-7 7-7-7"
                     />
                   </svg>
-                </button>
+                </div>
 
                 {/* Expanded editor */}
                 <AnimatePresence>

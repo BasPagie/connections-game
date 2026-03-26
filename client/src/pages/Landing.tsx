@@ -31,15 +31,15 @@ export default function Landing() {
         initial={{ opacity: 0, y: -30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-center mb-10"
+        className="text-center mb-6 sm:mb-10"
       >
         <h1
-          className="font-display font-black text-6xl sm:text-7xl text-transparent bg-clip-text 
+          className="font-display font-black text-4xl sm:text-6xl md:text-7xl text-transparent bg-clip-text 
                         bg-gradient-to-r from-brand-500 via-orange-500 to-pink-500 mb-3"
         >
           Woordenspel!
         </h1>
-        <p className="text-xl text-gray-600 font-display">
+        <p className="text-lg sm:text-xl text-gray-600 font-display">
           Speel samen connections! 🎮
         </p>
       </motion.div>
@@ -52,7 +52,7 @@ export default function Landing() {
         className="card w-full max-w-md"
       >
         <h2 className="font-display font-bold text-2xl text-gray-800 mb-6 text-center">
-          Nieuw Spel Maken
+          Start Nieuw Spel
         </h2>
 
         <div className="flex flex-col items-center gap-6">
@@ -103,7 +103,7 @@ export default function Landing() {
                 Maken...
               </span>
             ) : (
-              "🎲 Nieuw Spel Maken"
+              "🎲 Start Nieuw Spel"
             )}
           </button>
         </div>

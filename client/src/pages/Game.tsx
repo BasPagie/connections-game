@@ -127,7 +127,7 @@ export default function Game() {
   const isSpectating = state.player?.isHost && !state.room.settings.hostPlays;
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden px-4 py-3">
+    <div className="h-screen flex flex-col overflow-hidden px-2 sm:px-4 py-2 sm:py-3">
       <div className="max-w-5xl mx-auto w-full flex flex-col flex-1 min-h-0">
         {/* Header */}
         <motion.div
@@ -135,7 +135,7 @@ export default function Game() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-3"
         >
-          <div className="flex items-center justify-center gap-3 mb-2">
+          <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 flex-wrap">
             <span
               className={`px-3 py-1 rounded-full text-sm font-display font-bold
               ${
@@ -163,7 +163,7 @@ export default function Game() {
           </div>
         </motion.div>
 
-        <div className="flex gap-6 flex-1 min-h-0 items-center">
+        <div className="flex gap-3 sm:gap-6 flex-1 min-h-0 items-center">
           {/* Main game area */}
           <div className="flex-1 flex flex-col justify-center">
             {/* Timer */}

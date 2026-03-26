@@ -83,7 +83,7 @@ export default function OpenDeurGame({
         animate={{ opacity: 1, y: 0 }}
         className="text-center mb-6"
       >
-        <h2 className="font-display font-black text-2xl md:text-3xl text-gray-800">
+        <h2 className="font-display font-black text-xl sm:text-2xl md:text-3xl text-gray-800">
           {roundState.question}
         </h2>
         <p className="text-sm text-gray-500 mt-2">
@@ -94,7 +94,7 @@ export default function OpenDeurGame({
       </motion.div>
 
       {/* Found answers grid */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
         {Array.from({ length: roundState.totalAnswers }).map((_, i) => {
           const found = roundState.foundAnswers[i];
           const isFlashing = found && flash === found;
@@ -108,7 +108,7 @@ export default function OpenDeurGame({
                   ? { scale: [1, 1.05, 1], backgroundColor: "#dcfce7" }
                   : {}
               }
-              className={`h-14 rounded-xl flex items-center justify-center font-display font-bold text-lg
+              className={`h-11 sm:h-14 rounded-xl flex items-center justify-center font-display font-bold text-sm sm:text-lg
                 transition-all duration-300
                 ${
                   found
@@ -133,7 +133,7 @@ export default function OpenDeurGame({
       </div>
 
       {/* Input */}
-      <form onSubmit={handleSubmit} className="flex gap-2 mb-4">
+      <form onSubmit={handleSubmit} className="flex gap-2 mb-3 sm:mb-4">
         <motion.div
           animate={shake ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}}
           transition={{ duration: 0.4 }}
@@ -145,15 +145,15 @@ export default function OpenDeurGame({
             value={answer}
             onChange={(e) => setAnswer(e.target.value)}
             placeholder="Typ een antwoord..."
-            className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 focus:border-brand-400
-                       focus:outline-none font-display text-lg transition-colors"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 rounded-xl border-2 border-gray-200 focus:border-brand-400
+                       focus:outline-none font-display text-base sm:text-lg transition-colors"
             autoComplete="off"
           />
         </motion.div>
         <button
           type="submit"
           disabled={!answer.trim()}
-          className="px-6 py-3 rounded-xl bg-brand-500 text-white font-display font-bold
+          className="px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl bg-brand-500 text-white font-display font-bold
                      hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           ✓

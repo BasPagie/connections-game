@@ -96,25 +96,25 @@ export default function Lobby() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="flex items-center justify-between gap-3 mb-4"
+          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4"
         >
           {/* Left: room code + invite link */}
           <div className="flex items-center gap-2">
             <span
               className="bg-brand-100 text-brand-700 font-display font-bold 
-                         px-3 py-1.5 rounded-full text-xs"
+                         px-3 py-1.5 rounded-full text-xs shrink-0"
             >
               {roomId}
             </span>
             <input
               readOnly
               value={inviteUrl}
-              className="w-40 lg:w-56 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 
+              className="flex-1 min-w-0 sm:w-40 lg:w-56 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 
                          text-xs font-mono text-gray-500 truncate"
             />
             <button
               onClick={handleCopyLink}
-              className={`px-3 py-1.5 rounded-lg font-display font-bold text-xs transition-all
+              className={`px-3 py-1.5 rounded-lg font-display font-bold text-xs transition-all shrink-0
                 ${
                   copied
                     ? "bg-green-500 text-white"
@@ -126,17 +126,17 @@ export default function Lobby() {
           </div>
 
           {/* Right: spelers klaar + start button */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 justify-end">
             {isPlayerHost ? (
               <>
-                <span className="text-sm text-gray-400 font-display whitespace-nowrap">
+                <span className="text-sm text-gray-400 font-display whitespace-nowrap hidden sm:inline">
                   {state.room.players.length === 1
                     ? "Wacht op spelers..."
                     : `${state.room.players.length} spelers klaar!`}
                 </span>
                 <button
                   onClick={handleStartGame}
-                  className="btn-primary text-lg px-10 py-3 whitespace-nowrap"
+                  className="btn-primary text-base sm:text-lg px-6 sm:px-10 py-2.5 sm:py-3 whitespace-nowrap w-full sm:w-auto"
                 >
                   🚀 Start Spel!
                 </button>
@@ -149,7 +149,7 @@ export default function Lobby() {
           </div>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
           {/* Players */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}

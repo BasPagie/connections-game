@@ -49,8 +49,8 @@ export default function PlayerList({
 
             {/* Name + badges */}
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="font-display font-bold text-gray-800 truncate">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-display font-bold text-gray-800">
                   {player.nickname}
                 </span>
                 {isMe && (

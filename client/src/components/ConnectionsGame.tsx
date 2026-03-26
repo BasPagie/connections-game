@@ -78,13 +78,15 @@ export default function ConnectionsGame({
               initial={{ opacity: 0, height: 0, marginBottom: 0 }}
               animate={{ opacity: 1, height: "auto", marginBottom: 8 }}
               transition={{ duration: 0.4 }}
-              className={`${colors.bg} rounded-2xl p-4 text-center border-2 ${colors.border}`}
+              className={`${colors.bg} rounded-xl sm:rounded-2xl p-2.5 sm:p-4 text-center border-2 ${colors.border}`}
             >
-              <p className={`font-display font-black text-lg ${colors.text}`}>
+              <p
+                className={`font-display font-black text-sm sm:text-lg ${colors.text}`}
+              >
                 {group.label}
               </p>
               <p
-                className={`font-display font-medium text-sm ${colors.text} opacity-80`}
+                className={`font-display font-medium text-xs sm:text-sm ${colors.text} opacity-80`}
               >
                 {group.words.join(", ")}
               </p>
@@ -108,7 +110,7 @@ export default function ConnectionsGame({
       )}
 
       {/* Word grid */}
-      <div className="grid grid-cols-4 gap-3 sm:gap-4 mb-4">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-3 mb-4">
         <AnimatePresence>
           {roundState.words.map((word) => {
             const isSelected = selected.includes(word);
@@ -148,14 +150,14 @@ export default function ConnectionsGame({
       </div>
 
       {/* Controls */}
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-2 sm:gap-3">
         {/* Lives */}
         {roundState.attemptsLeft !== null && (
-          <div className="flex gap-1">
+          <div className="flex gap-0.5 sm:gap-1">
             {Array.from({ length: 4 }).map((_, i) => (
               <span
                 key={i}
-                className={`text-xl transition-all duration-300
+                className={`text-base sm:text-xl transition-all duration-300
                   ${i < (roundState.attemptsLeft ?? 0) ? "opacity-100" : "opacity-20 grayscale"}`}
               >
                 ❤️
@@ -164,20 +166,20 @@ export default function ConnectionsGame({
           </div>
         )}
 
-        <div className="flex gap-2 ml-auto">
+        <div className="flex gap-1.5 sm:gap-2 ml-auto">
           <button
             onClick={handleDeselectAll}
             disabled={selected.length === 0}
-            className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 
-                       font-display font-bold text-sm transition-all disabled:opacity-30"
+            className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 
+                       font-display font-bold text-xs sm:text-sm transition-all disabled:opacity-30"
           >
             Wissen
           </button>
           <button
             onClick={handleSubmit}
             disabled={selected.length !== 4}
-            className="px-6 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white 
-                       font-display font-bold text-sm shadow-md transition-all
+            className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white 
+                       font-display font-bold text-xs sm:text-sm shadow-md transition-all
                        disabled:opacity-30 disabled:cursor-not-allowed
                        hover:shadow-lg active:scale-95"
           >

@@ -61,8 +61,14 @@ function sanitizeNickname(raw: string): string {
   return raw.trim().slice(0, MAX_NICKNAME_LENGTH).replace(/[<>&"']/g, '');
 }
 
+const MAX_AVATAR_BYTES = 100_000; // ~100KB max for custom avatar images
+
 function isValidAvatar(raw: string): boolean {
-  return typeof raw === 'string' && PREMADE_AVATARS.includes(raw);
+  if (typeof raw !== 'string') return false;
+  if (PREMADE_AVATARS.includes(raw)) return true;
+  // Allow base64 data URL images (JPEG/PNG/WebP) up to size limit
+  if (raw.startsWith('data:image/') && raw.length <= MAX_AVATAR_BYTES) return true;
+  return false;
 }
 
 export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {

@@ -11,23 +11,23 @@
 @layer components {
   .btn-primary {
     @apply bg-brand-500 hover:bg-brand-600 text-white font-display font-bold 
-           py-3 px-8 rounded-2xl text-lg shadow-lg hover:shadow-xl 
+           py-2.5 sm:py-3 px-6 sm:px-8 rounded-2xl text-base sm:text-lg shadow-lg hover:shadow-xl 
            transform hover:scale-105 active:scale-95 transition-all duration-200;
   }
 
   .btn-secondary {
     @apply bg-white hover:bg-gray-50 text-brand-700 font-display font-bold 
-           py-3 px-8 rounded-2xl text-lg shadow-md hover:shadow-lg border-2 border-brand-200
+           py-2.5 sm:py-3 px-6 sm:px-8 rounded-2xl text-base sm:text-lg shadow-md hover:shadow-lg border-2 border-brand-200
            transform hover:scale-105 active:scale-95 transition-all duration-200;
   }
 
   .card {
-    @apply bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-6;
+    @apply bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-4 sm:p-6;
   }
 
   .word-tile {
-    @apply font-display font-bold text-center py-5 px-3 rounded-xl cursor-pointer
-           select-none transition-all duration-200 text-base sm:text-lg
+    @apply font-display font-bold text-center py-3 sm:py-5 px-1.5 sm:px-3 rounded-xl cursor-pointer
+           select-none transition-all duration-200 text-xs sm:text-base
            shadow-md hover:shadow-lg transform hover:scale-105 active:scale-95;
   }
 

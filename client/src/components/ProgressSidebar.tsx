@@ -50,7 +50,7 @@ export default function ProgressSidebar({
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <span className="font-display font-bold text-gray-700 truncate text-xs">
+                  <span className="font-display font-bold text-gray-700 text-xs break-all leading-tight">
                     {player.nickname}
                   </span>
                   <span className="font-display font-bold text-brand-600 text-xs ml-1">

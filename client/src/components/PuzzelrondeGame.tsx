@@ -151,7 +151,7 @@ export default function PuzzelrondeGame({
 
       {/* Word grid (3x4) */}
       {!roundState.pendingAnswer && roundState.words.length > 0 && (
-        <div className="grid grid-cols-4 gap-3 sm:gap-4 mb-4">
+        <div className="grid grid-cols-4 gap-1.5 sm:gap-3 mb-4">
           <AnimatePresence>
             {roundState.words.map((word) => {
               const isSelected = selected.includes(word);
@@ -187,13 +187,13 @@ export default function PuzzelrondeGame({
 
       {/* Controls (only when not in answer mode) */}
       {!roundState.pendingAnswer && roundState.words.length > 0 && (
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center justify-between gap-2 sm:gap-3">
           {roundState.attemptsLeft !== null && (
-            <div className="flex gap-1">
+            <div className="flex gap-0.5 sm:gap-1">
               {Array.from({ length: 4 }).map((_, i) => (
                 <span
                   key={i}
-                  className={`text-xl transition-all duration-300
+                  className={`text-base sm:text-xl transition-all duration-300
                     ${i < (roundState.attemptsLeft ?? 0) ? "opacity-100" : "opacity-20 grayscale"}`}
                 >
                   ❤️
@@ -202,20 +202,20 @@ export default function PuzzelrondeGame({
             </div>
           )}
 
-          <div className="flex gap-2 ml-auto">
+          <div className="flex gap-1.5 sm:gap-2 ml-auto">
             <button
               onClick={() => setSelected([])}
               disabled={selected.length === 0}
-              className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600
-                         font-display font-bold text-sm transition-all disabled:opacity-30"
+              className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600
+                         font-display font-bold text-xs sm:text-sm transition-all disabled:opacity-30"
             >
               Wissen
             </button>
             <button
               onClick={handleSubmitGroup}
               disabled={selected.length !== 4}
-              className="px-6 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 text-white
-                         font-display font-bold text-sm shadow-md transition-all
+              className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 text-white
+                         font-display font-bold text-xs sm:text-sm shadow-md transition-all
                          disabled:opacity-30 active:scale-95"
             >
               Controleer

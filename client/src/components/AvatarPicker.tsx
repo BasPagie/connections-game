@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { createPortal } from "react-dom";
 import { motion } from "framer-motion";
 import { PREMADE_AVATARS } from "shared/types";
 
@@ -70,68 +71,69 @@ export default function AvatarPicker({ value, onChange }: AvatarPickerProps) {
 
       <p className="text-xs text-gray-500 mt-1 text-center">Kies avatar</p>
 
-      {/* Picker dropdown */}
-      {showPicker && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: -10 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          className="absolute z-50 top-24 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-2xl 
-                     p-4 w-72 border border-gray-100"
-        >
-          <p className="text-sm font-display font-bold text-gray-700 mb-3">
-            Kies een avatar
-          </p>
-
-          <div className="grid grid-cols-5 gap-2 mb-3">
-            {PREMADE_AVATARS.map((emoji) => (
-              <button
-                key={emoji}
-                type="button"
-                onClick={() => {
-                  onChange(emoji);
-                  setShowPicker(false);
-                }}
-                className={`w-12 h-12 rounded-xl flex items-center justify-center text-2xl
-                           transition-all duration-150 hover:scale-110 active:scale-95
-                           ${
-                             value === emoji
-                               ? "bg-brand-100 border-2 border-brand-500 shadow-md"
-                               : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
-                           }`}
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-
-          <div className="border-t border-gray-100 pt-3">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full py-2 px-4 bg-gray-50 hover:bg-gray-100 rounded-xl text-sm 
-                         font-medium text-gray-600 transition-colors flex items-center justify-center gap-2"
-            >
-              📷 Upload eigen foto
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleFileUpload}
-              className="hidden"
+      {/* Picker + backdrop via portal to escape parent stacking context */}
+      {showPicker &&
+        createPortal(
+          <>
+            <div
+              className="fixed inset-0 bg-black/30 sm:bg-black/20 z-40"
+              onClick={() => setShowPicker(false)}
             />
-          </div>
-        </motion.div>
-      )}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="fixed inset-x-4 top-1/2 -translate-y-1/2 z-50
+                         sm:inset-x-auto sm:left-1/2 sm:-translate-x-1/2
+                         bg-white rounded-2xl shadow-2xl p-4 sm:w-72 border border-gray-100"
+            >
+              <p className="text-sm font-display font-bold text-gray-700 mb-3">
+                Kies een avatar
+              </p>
 
-      {/* Backdrop to close picker */}
-      {showPicker && (
-        <div
-          className="fixed inset-0 z-40"
-          onClick={() => setShowPicker(false)}
-        />
-      )}
+              <div className="grid grid-cols-5 gap-2 mb-3">
+                {PREMADE_AVATARS.map((emoji) => (
+                  <button
+                    key={emoji}
+                    type="button"
+                    onClick={() => {
+                      onChange(emoji);
+                      setShowPicker(false);
+                    }}
+                    className={`aspect-square rounded-xl flex items-center justify-center text-xl sm:text-2xl
+                               transition-all duration-150 hover:scale-110 active:scale-95
+                               ${
+                                 value === emoji
+                                   ? "bg-brand-100 border-2 border-brand-500 shadow-md"
+                                   : "bg-gray-50 hover:bg-gray-100 border-2 border-transparent"
+                               }`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+
+              <div className="border-t border-gray-100 pt-3">
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full py-2 px-4 bg-gray-50 hover:bg-gray-100 rounded-xl text-sm 
+                             font-medium text-gray-600 transition-colors flex items-center justify-center gap-2"
+                >
+                  📷 Upload eigen foto
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </div>
+            </motion.div>
+          </>,
+          document.body,
+        )}
     </div>
   );
 }
