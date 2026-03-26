@@ -209,7 +209,11 @@ export default function GameSettingsPanel({
         <div className="flex gap-2">
           <button
             onClick={() =>
-              onChange({ ...settings, attemptsMode: "limited", maxAttempts: 4 })
+              onChange({
+                ...settings,
+                attemptsMode: "limited",
+                maxAttempts: settings.maxAttempts || 4,
+              })
             }
             className={`flex-1 py-2.5 px-3 rounded-xl text-sm font-medium transition-all
               ${
@@ -218,7 +222,7 @@ export default function GameSettingsPanel({
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
           >
-            ❤️ {settings.maxAttempts} levens
+            ❤️ Levens
           </button>
           <button
             onClick={() => onChange({ ...settings, attemptsMode: "unlimited" })}
@@ -232,6 +236,24 @@ export default function GameSettingsPanel({
             ♾️ Onbeperkt
           </button>
         </div>
+        {settings.attemptsMode === "limited" && (
+          <div className="flex items-center gap-2 mt-2">
+            {[4, 5, 6, 7, 8, 9, 10].map((n) => (
+              <button
+                key={n}
+                onClick={() => onChange({ ...settings, maxAttempts: n })}
+                className={`flex-1 py-1.5 rounded-lg text-sm font-medium transition-all
+                  ${
+                    settings.maxAttempts === n
+                      ? "bg-red-500 text-white shadow-md"
+                      : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                  }`}
+              >
+                {n} ❤️
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Time limit */}

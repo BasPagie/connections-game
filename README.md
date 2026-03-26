@@ -1,66 +1,47 @@
-# Connections Game 🎯
+# Connections Game
 
-A multiplayer Dutch word puzzle game combining **NYT Connections** and **De Slimste Mens Puzzelronde**, built for weekly team quizzes.
+A Dutch word puzzle game for our weekly team quiz. Mixes NYT Connections with De Slimste Mens Puzzelronde. Multiplayer, real-time, runs in the browser.
 
-## Features
+## What it does
 
-- **Two game modes**: Connections (group 16 words into 4 categories) and Puzzelronde (find the connecting word for groups of clue words)
-- **Real-time multiplayer** via Socket.IO — play on any device in the same room
-- **Host controls** — the host manages rounds, can spectate or play along
-- **Difficulty levels** — Easy, Medium, and Hard puzzles for both game modes
-- **60 built-in puzzles** — 30 Connections + 30 Puzzelronde, all in Dutch
-- **Mixed puzzle styles** — compound word puzzles and associative clue puzzles (De Slimste Mens style)
-- **Suspenseful results** — Kahoot-style reveal at the end of each game
-- **Countdown timer** — configurable time limit per round
-- **Score editing** — host can adjust scores in the lobby
-- **Mobile-friendly** — responsive design with Tailwind CSS
+Two game modes:
 
-## Tech Stack
+- **Connections** — 16 words on screen, group them into 4 categories
+- **Puzzelronde** — see clue words per group, guess the connecting word (compound words or associations)
 
-| Layer   | Tech |
-|---------|------|
-| Client  | React 18, TypeScript, Vite, Tailwind CSS, Framer Motion |
-| Server  | Node.js, Express, Socket.IO, TypeScript |
-| Shared  | Shared TypeScript types between client and server |
+The host creates a room, shares the link, and everyone joins on their own device. Host picks the rounds, difficulty, number of lives, etc. Results get revealed Kahoot-style at the end.
 
-## Getting Started
+60 puzzles included (all Dutch), 3 difficulty levels, configurable timer and lives.
+
+## Setup
 
 ```bash
-# Install all dependencies
 npm run install:all
-
-# Start both server and client in dev mode
 npm run dev
 ```
 
-- **Client**: http://localhost:5173
-- **Server**: http://localhost:3001
+Client runs on `localhost:5173`, server on `localhost:3001`.
 
-## Project Structure
+## Stack
+
+- **Client**: React, TypeScript, Vite, Tailwind, Framer Motion
+- **Server**: Node.js, Express, Socket.IO, TypeScript
+- **Shared**: TypeScript types used by both client and server
+
+## Project structure
 
 ```
-connections-game/
-├── client/          # React + Vite frontend
-│   └── src/
-│       ├── components/  # Game UI components
-│       ├── context/     # React context (game state, socket)
-│       ├── hooks/       # Socket event handlers
-│       └── pages/       # Landing, Join, Lobby, Game, Results
-├── server/          # Express + Socket.IO backend
-│   └── src/
-│       ├── gameEngine.ts      # Core game logic & scoring
-│       ├── puzzleStore.ts     # All 60 puzzles
-│       ├── socketHandlers.ts  # Socket event handling
-│       └── rooms.ts           # Room management
-└── shared/          # Shared TypeScript types
-    └── types.ts
+client/src/
+  components/    # game UI
+  context/       # game state + socket
+  pages/         # Landing, Join, Lobby, Game, Results
+
+server/src/
+  gameEngine.ts      # round logic, scoring
+  puzzleStore.ts     # all 60 puzzles
+  socketHandlers.ts  # socket events
+  rooms.ts           # room management
+
+shared/
+  types.ts           # shared types
 ```
-
-## How to Play
-
-1. One player creates a room from the landing page
-2. Share the room link with other players
-3. The host configures rounds (game mode, difficulty) and starts the game
-4. **Connections**: Select 4 words that belong together — find all 4 groups
-5. **Puzzelronde**: Look at the clue words and guess the connecting word
-6. Points are awarded for correct answers, with speed bonuses
