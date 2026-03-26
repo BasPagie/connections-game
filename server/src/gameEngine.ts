@@ -169,12 +169,14 @@ function buildRoundState(instance: GameInstance, room: GameRoom): RoundState {
       timeRemainingMs,
     };
   } else {
+    const firstQuestion = puzzle.questions[0];
     return {
       type: 'opendeur',
       currentQuestionIndex: 0,
-      question: puzzle.questions[0].question,
+      question: firstQuestion.question,
       foundAnswers: [],
-      totalAnswers: puzzle.questions[0].answers.length,
+      answerHints: firstQuestion.answers.map((a) => a[0].toUpperCase()).sort(),
+      totalAnswers: firstQuestion.answers.length,
       totalQuestions: puzzle.questions.length,
       timeRemainingMs,
     };
@@ -231,12 +233,17 @@ export function getPlayerRoundState(roomId: string, playerId: string, room: Game
     const qIdx = tracker.currentQuestionIndex;
     const question = puzzle.questions[qIdx];
     const found = tracker.foundAnswersPerQuestion.get(qIdx) ?? [];
+    const remaining = question.answers.filter(
+      (a) => !found.some((f) => f.toLowerCase() === a.toLowerCase())
+    );
+    const answerHints = remaining.map((a) => a[0].toUpperCase()).sort();
 
     return {
       type: 'opendeur',
       currentQuestionIndex: qIdx,
       question: question.question,
       foundAnswers: found,
+      answerHints,
       totalAnswers: question.answers.length,
       totalQuestions: puzzle.questions.length,
       timeRemainingMs,
@@ -506,16 +513,41 @@ export function skipOpenDeurQuestion(
 }
 
 // ─── Fuzzy matching ────────────────────────────────────
+function dutchStem(word: string): string {
+  const w = word.toLowerCase().trim();
+  if (w.endsWith('tjes') && w.length > 5) return w.slice(0, -4);
+  if (w.endsWith('jes') && w.length > 4) return w.slice(0, -3);
+  if (w.endsWith('eren') && w.length > 5) return w.slice(0, -4);
+  if (w.endsWith('ren') && w.length > 4) return w.slice(0, -3);
+  if (w.endsWith('enden') && w.length > 6) return w.slice(0, -5);
+  if (w.endsWith('anden') && w.length > 6) return w.slice(0, -5);
+  if (w.endsWith('enden') && w.length > 6) return w.slice(0, -5);
+  if (w.endsWith('en') && w.length > 3) return w.slice(0, -2);
+  if (w.endsWith('es') && w.length > 3) return w.slice(0, -2);
+  if (w.endsWith('s') && w.length > 3) return w.slice(0, -1);
+  if (w.endsWith('e') && w.length > 3) return w.slice(0, -1);
+  return w;
+}
+
 function fuzzyMatch(input: string, target: string): boolean {
   const a = input.trim().toLowerCase();
   const b = target.trim().toLowerCase();
 
   if (a === b) return true;
 
-  // Levenshtein distance ≤ 1 for short words, ≤ 2 for longer words (6+ chars)
+  // Direct Levenshtein check
   const maxDist = b.length >= 6 ? 2 : 1;
-  if (Math.abs(a.length - b.length) > maxDist) return false;
-  return levenshtein(a, b) <= maxDist;
+  if (Math.abs(a.length - b.length) <= maxDist && levenshtein(a, b) <= maxDist) return true;
+
+  // Stem-based: strip Dutch inflectional suffixes (-en, -s, -jes, etc.) then compare
+  // This handles e.g. "schepen" → stem "schep" ≈ "schip" (Lev 1)
+  const aStem = dutchStem(a);
+  const bStem = dutchStem(b);
+  if (aStem === bStem) return true;
+  const stemMaxDist = bStem.length >= 5 ? 2 : 1;
+  if (Math.abs(aStem.length - bStem.length) <= stemMaxDist && levenshtein(aStem, bStem) <= stemMaxDist) return true;
+
+  return false;
 }
 
 function levenshtein(a: string, b: string): number {

@@ -14,15 +14,31 @@ export default function ProgressSidebar({
   currentPlayerId,
   totalGroups,
 }: ProgressSidebarProps) {
-  const sorted = [...progress].sort((a, b) => b.score - a.score);
+  // Merge players with progress data so everyone shows from the start
+  const merged = players
+    .filter((pl) => {
+      // Exclude spectating host (no progress entry will ever exist)
+      const hasProgress = progress.some((p) => p.playerId === pl.id);
+      return hasProgress || progress.length === 0;
+    })
+    .map((pl) => {
+      const p = progress.find((pr) => pr.playerId === pl.id);
+      return {
+        playerId: pl.id,
+        solvedCount: p?.solvedCount ?? 0,
+        finished: p?.finished ?? false,
+        score: p?.score ?? pl.score,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
 
   return (
     <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-4 shadow-lg">
       <h4 className="font-display font-bold text-sm text-gray-500 mb-3 uppercase tracking-wide">
-        Voortgang
+        Tussenstand
       </h4>
       <div className="space-y-2">
-        {sorted.map((p) => {
+        {merged.map((p) => {
           const player = players.find((pl) => pl.id === p.playerId);
           if (!player) return null;
           const isMe = p.playerId === currentPlayerId;

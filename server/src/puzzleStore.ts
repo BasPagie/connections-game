@@ -861,7 +861,7 @@ const openDeurPuzzles: OpenDeurPuzzle[] = [
     difficulty: 'medium',
     questions: [
       { question: 'Wat weet je van het Oude Egypte?', answers: ['Farao', 'Piramide', 'Mummie', 'Nijl'] },
-      { question: 'Wat weet je van Formule 1?', answers: ['Pitstop', 'Podium', 'Snelheid', 'Raceauto'] },
+      { question: 'Wat weet je van Formule 1?', answers: ['Pitstop', 'Raceauto', 'Snelheid', 'Race'] },
       { question: 'Wat weet je van een vulkaan?', answers: ['Lava', 'Uitbarsting', 'Krater', 'As'] },
     ],
   },

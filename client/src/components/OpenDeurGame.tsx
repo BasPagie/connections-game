@@ -98,6 +98,9 @@ export default function OpenDeurGame({
         {Array.from({ length: roundState.totalAnswers }).map((_, i) => {
           const found = roundState.foundAnswers[i];
           const isFlashing = found && flash === found;
+          const emptyIndex = i - roundState.foundAnswers.length;
+          const hints = roundState.answerHints ?? [];
+          const hint = !found ? (hints[emptyIndex] ?? "?") : null;
 
           return (
             <motion.div
@@ -125,7 +128,9 @@ export default function OpenDeurGame({
                   {found}
                 </motion.span>
               ) : (
-                "?"
+                <span className="font-display font-black text-gray-400 tracking-wider">
+                  {hint}_
+                </span>
               )}
             </motion.div>
           );
@@ -164,8 +169,8 @@ export default function OpenDeurGame({
       <div className="text-center">
         <button
           onClick={onSkipQuestion}
-          className="text-sm text-gray-400 hover:text-gray-600 font-display font-medium
-                     transition-colors underline-offset-2 hover:underline"
+          className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 
+                     font-display font-bold text-sm transition-all active:scale-95"
         >
           Vraag overslaan →
         </button>
