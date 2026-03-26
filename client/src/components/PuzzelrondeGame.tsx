@@ -6,6 +6,8 @@ interface PuzzelrondeGameProps {
   roundState: PuzzelrondeRoundState;
   onSubmitGroup: (words: string[]) => void;
   onSubmitAnswer: (answer: string) => void;
+  maxAttempts?: number;
+  lastAnswerResult?: { correct: boolean; correctAnswer?: string } | null;
   hintWords?: string[];
 }
 
@@ -13,14 +15,12 @@ export default function PuzzelrondeGame({
   roundState,
   onSubmitGroup,
   onSubmitAnswer,
+  maxAttempts = 4,
+  lastAnswerResult = null,
   hintWords = [],
 }: PuzzelrondeGameProps) {
   const [selected, setSelected] = useState<string[]>([]);
   const [answer, setAnswer] = useState("");
-  const [lastAnswerResult, setLastAnswerResult] = useState<{
-    correct: boolean;
-    correctAnswer?: string;
-  } | null>(null);
 
   const handleTileClick = useCallback(
     (word: string) => {
@@ -98,18 +98,6 @@ export default function PuzzelrondeGame({
           <p className="font-display font-bold text-purple-800 mb-3">
             🤔 Wat is het verbindende woord?
           </p>
-          {lastAnswerResult && (
-            <motion.p
-              initial={{ opacity: 0, y: -5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className={`text-sm mb-2 font-medium
-                ${lastAnswerResult.correct ? "text-green-600" : "text-red-500"}`}
-            >
-              {lastAnswerResult.correct
-                ? "✓ Correct!"
-                : `✗ Helaas! Het juiste antwoord was: "${lastAnswerResult.correctAnswer}"`}
-            </motion.p>
-          )}
           <div className="flex gap-2">
             <input
               type="text"
@@ -120,7 +108,6 @@ export default function PuzzelrondeGame({
               className="flex-1 px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-400
                          focus:ring-2 focus:ring-purple-200 outline-none font-display text-lg"
               onKeyDown={(e) => e.key === "Enter" && handleSubmitAnswer()}
-              autoFocus
             />
             <button
               onClick={handleSubmitAnswer}
@@ -190,7 +177,7 @@ export default function PuzzelrondeGame({
         <div className="flex items-center justify-between gap-2 sm:gap-3">
           {roundState.attemptsLeft !== null && (
             <div className="flex gap-0.5 sm:gap-1">
-              {Array.from({ length: 4 }).map((_, i) => (
+              {Array.from({ length: maxAttempts }).map((_, i) => (
                 <span
                   key={i}
                   className={`text-base sm:text-xl transition-all duration-300

@@ -195,6 +195,7 @@ export default function Game() {
                   <ConnectionsGame
                     roundState={state.roundState as ConnectionsRoundState}
                     onSubmitGroup={handleSubmitGroup}
+                    maxAttempts={state.room.settings.maxAttempts}
                     hintWords={state.hintWords}
                   />
                 ) : state.roundState.type === "puzzelronde" ? (
@@ -202,6 +203,8 @@ export default function Game() {
                     roundState={state.roundState as PuzzelrondeRoundState}
                     onSubmitGroup={handleSubmitGroup}
                     onSubmitAnswer={handleSubmitAnswer}
+                    maxAttempts={state.room.settings.maxAttempts}
+                    lastAnswerResult={state.lastAnswerResult}
                     hintWords={state.hintWords}
                   />
                 ) : (

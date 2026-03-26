@@ -21,6 +21,7 @@ export interface GameState {
   room: GameRoom | null;
   roundState: RoundState | null;
   hintWords: string[];
+  lastAnswerResult: { correct: boolean; correctAnswer?: string } | null;
   playerProgress: PlayerProgress[];
   roundResults: RoundResult[];
   currentRoundResult: RoundResult | null;
@@ -36,6 +37,7 @@ const initialState: GameState = {
   room: null,
   roundState: null,
   hintWords: [],
+  lastAnswerResult: null,
   playerProgress: [],
   roundResults: [],
   currentRoundResult: null,
@@ -57,7 +59,12 @@ export type GameAction =
   | { type: "COUNTDOWN"; count: number }
   | { type: "SCORE_UPDATED"; playerId: string; score: number }
   | { type: "ROUND_START"; roundState: RoundState; roundIndex?: number }
-  | { type: "UPDATE_ROUND_STATE"; roundState: RoundState; hintWords?: string[] }
+  | {
+      type: "UPDATE_ROUND_STATE";
+      roundState: RoundState;
+      hintWords?: string[];
+      answerResult?: { correct: boolean; correctAnswer?: string };
+    }
   | { type: "PLAYER_PROGRESS"; progress: PlayerProgress[] }
   | { type: "ROUND_END"; result: RoundResult }
   | { type: "GAME_END"; results: FinalResults }
@@ -143,6 +150,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         roundState: action.roundState,
         hintWords: [],
+        lastAnswerResult: null,
         playerProgress: [],
         currentRoundResult: null,
         phase: "playing",
@@ -157,6 +165,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...state,
         roundState: action.roundState,
         hintWords: action.hintWords ?? [],
+        lastAnswerResult: action.answerResult ?? state.lastAnswerResult,
       };
 
     case "PLAYER_PROGRESS":

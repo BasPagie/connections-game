@@ -28,6 +28,7 @@ interface PlayerRoundTracker {
   endTime: number | null;
   score: number;
   pendingGroupIndex: number | null; // puzzelronde: group just solved, waiting for answer
+  answerResults: Map<number, boolean>; // puzzelronde: groupIndex → was answer correct
   // Open Deur tracking
   currentQuestionIndex: number;
   foundAnswersPerQuestion: Map<number, string[]>;
@@ -114,6 +115,7 @@ export function startRound(room: GameRoom): { roundState: RoundState; puzzle: Pu
       endTime: null,
       score: 0,
       pendingGroupIndex: null,
+      answerResults: new Map(),
       currentQuestionIndex: 0,
       foundAnswersPerQuestion: new Map(),
     });
@@ -210,7 +212,7 @@ export function getPlayerRoundState(roomId: string, playerId: string, room: Game
   } else if (puzzle.type === 'puzzelronde') {
     const solvedGroups = tracker.solvedGroups.map((i) => ({
       words: puzzle.groups[i].words,
-      answerCorrect: null as boolean | null, // we'll track this separately
+      answerCorrect: tracker.answerResults.get(i) ?? null,
     }));
     const solvedWords = new Set(tracker.solvedGroups.flatMap((i) => puzzle.groups[i].words));
     const remainingWords = shuffle(
@@ -380,6 +382,7 @@ export function submitAnswer(
     tracker.score += 150;
   }
 
+  tracker.answerResults.set(tracker.pendingGroupIndex, isCorrect);
   tracker.pendingGroupIndex = null;
 
   // Check if all groups solved and all answers given

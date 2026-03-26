@@ -941,7 +941,7 @@ const openDeurPuzzles: OpenDeurPuzzle[] = [
     difficulty: 'medium',
     questions: [
       { question: 'Wat weet je van Netflix?', answers: ['Serie', 'Film', 'Abonnement', 'Streamen'] },
-      { question: 'Wat weet je van de Romeinen?', answers: ['Colosseum', 'Gladiator', 'Toga', 'Keizer'] },
+      { question: 'Wat weet je van de Romeinen?', answers: ['Rome', 'Gladiator', 'Toga', 'Keizer'] },
       { question: 'Wat weet je van tennis?', answers: ['Racket', 'Bal', 'Wimbledon', 'Net'] },
     ],
   },

@@ -27,12 +27,14 @@ const GROUP_COLORS: Record<
 interface ConnectionsGameProps {
   roundState: ConnectionsRoundState;
   onSubmitGroup: (words: string[]) => void;
+  maxAttempts?: number;
   hintWords?: string[];
 }
 
 export default function ConnectionsGame({
   roundState,
   onSubmitGroup,
+  maxAttempts = 4,
   hintWords = [],
 }: ConnectionsGameProps) {
   const [selected, setSelected] = useState<string[]>([]);
@@ -154,7 +156,7 @@ export default function ConnectionsGame({
         {/* Lives */}
         {roundState.attemptsLeft !== null && (
           <div className="flex gap-0.5 sm:gap-1">
-            {Array.from({ length: 4 }).map((_, i) => (
+            {Array.from({ length: maxAttempts }).map((_, i) => (
               <span
                 key={i}
                 className={`text-base sm:text-xl transition-all duration-300
