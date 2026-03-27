@@ -3,11 +3,16 @@ import type {
   ConnectionsPuzzle,
   PuzzelrondePuzzle,
   OpenDeurPuzzle,
+  LingoPuzzle,
   Puzzle,
   RoundState,
   ConnectionsRoundState,
   PuzzelrondeRoundState,
   OpenDeurRoundState,
+  LingoRoundState,
+  LingoGuess,
+  LingoLetterFeedback,
+  LingoWordResult,
   PlayerProgress,
   PlayerRoundResult,
   RoundResult,
@@ -15,7 +20,7 @@ import type {
   ConnectionsGroup,
   OpenDeurQuestion,
 } from '../../shared/types.js';
-import { getConnectionsPuzzles, getPuzzelrondePuzzles, getOpenDeurPuzzles } from './puzzleStore.js';
+import { getConnectionsPuzzles, getPuzzelrondePuzzles, getOpenDeurPuzzles, getLingoPuzzles, isValidLingoGuess } from './puzzleStore.js';
 
 // ─── Per-player round tracking ─────────────────────────
 interface PlayerRoundTracker {
@@ -32,6 +37,10 @@ interface PlayerRoundTracker {
   // Open Deur tracking
   currentQuestionIndex: number;
   foundAnswersPerQuestion: Map<number, string[]>;
+  // Lingo tracking
+  lingoCurrentWordIndex: number;
+  lingoGuessesPerWord: Map<number, LingoGuess[]>;
+  lingoCompletedWords: LingoWordResult[];
 }
 
 // ─── Game instance per room ────────────────────────────
@@ -74,7 +83,9 @@ export function startRound(room: GameRoom): { roundState: RoundState; puzzle: Pu
       ? getConnectionsPuzzles()
       : roundConfig.type === 'puzzelronde'
         ? getPuzzelrondePuzzles()
-        : getOpenDeurPuzzles();
+        : roundConfig.type === 'lingo'
+          ? getLingoPuzzles()
+          : getOpenDeurPuzzles();
     const found = allPuzzles.find((p) => p.id === roundConfig.puzzleId);
     if (!found) return null;
     puzzle = found;
@@ -84,7 +95,9 @@ export function startRound(room: GameRoom): { roundState: RoundState; puzzle: Pu
       ? getConnectionsPuzzles()
       : roundConfig.type === 'puzzelronde'
         ? getPuzzelrondePuzzles()
-        : getOpenDeurPuzzles();
+        : roundConfig.type === 'lingo'
+          ? getLingoPuzzles()
+          : getOpenDeurPuzzles();
     const filtered = allPuzzles.filter((p) => p.difficulty === roundConfig.difficulty);
     const pool = filtered.length > 0 ? filtered : allPuzzles;
     // Exclude previously used puzzles in this game
@@ -118,6 +131,9 @@ export function startRound(room: GameRoom): { roundState: RoundState; puzzle: Pu
       answerResults: new Map(),
       currentQuestionIndex: 0,
       foundAnswersPerQuestion: new Map(),
+      lingoCurrentWordIndex: 0,
+      lingoGuessesPerWord: new Map(),
+      lingoCompletedWords: [],
     });
   }
 
@@ -165,6 +181,19 @@ function buildRoundState(instance: GameInstance, room: GameRoom): RoundState {
       words,
       solvedGroups: [],
       pendingAnswer: false,
+      attemptsLeft,
+      timeRemainingMs,
+    };
+  } else if (puzzle.type === 'lingo') {
+    return {
+      type: 'lingo',
+      wordLength: 5,
+      currentWordIndex: 0,
+      totalWords: puzzle.words.length,
+      firstLetter: puzzle.words[0][0].toUpperCase(),
+      guesses: [],
+      maxGuessesPerWord: 5,
+      completedWords: [],
       attemptsLeft,
       timeRemainingMs,
     };
@@ -229,6 +258,23 @@ export function getPlayerRoundState(roomId: string, playerId: string, room: Game
       attemptsLeft,
       timeRemainingMs,
     };
+  } else if (puzzle.type === 'lingo') {
+    const wordIdx = tracker.lingoCurrentWordIndex;
+    const currentGuesses = tracker.lingoGuessesPerWord.get(wordIdx) ?? [];
+    const currentWord = wordIdx < puzzle.words.length ? puzzle.words[wordIdx] : puzzle.words[puzzle.words.length - 1];
+
+    return {
+      type: 'lingo',
+      wordLength: 5,
+      currentWordIndex: wordIdx,
+      totalWords: puzzle.words.length,
+      firstLetter: currentWord[0].toUpperCase(),
+      guesses: currentGuesses,
+      maxGuessesPerWord: 5,
+      completedWords: tracker.lingoCompletedWords,
+      attemptsLeft,
+      timeRemainingMs,
+    };
   } else {
     const qIdx = tracker.currentQuestionIndex;
     const question = puzzle.questions[qIdx];
@@ -270,8 +316,8 @@ export function submitGroupGuess(
   const instance = activeGames.get(roomId);
   if (!instance) return null;
 
-  // Open Deur doesn't use group guesses
-  if (instance.puzzle.type === 'opendeur') return null;
+  // Open Deur and Lingo don't use group guesses
+  if (instance.puzzle.type === 'opendeur' || instance.puzzle.type === 'lingo') return null;
 
   const tracker = instance.playerTrackers.get(playerId);
   if (!tracker || tracker.finished) return null;
@@ -512,6 +558,134 @@ export function skipOpenDeurQuestion(
   };
 }
 
+// ─── Submit Lingo guess ────────────────────────────────
+export interface LingoGuessResult {
+  correct: boolean;
+  feedback: LingoLetterFeedback[];
+  wordComplete: boolean;
+  previousWord?: string;
+  playerFinished: boolean;
+  playerEliminated: boolean;
+}
+
+function computeLingoFeedback(guess: string, target: string): LingoLetterFeedback[] {
+  const g = guess.toUpperCase().split('');
+  const t = target.toUpperCase().split('');
+  const feedback: LingoLetterFeedback[] = new Array(g.length).fill('absent');
+  const targetUsed = new Array(t.length).fill(false);
+
+  // First pass: mark exact matches
+  for (let i = 0; i < g.length; i++) {
+    if (g[i] === t[i]) {
+      feedback[i] = 'correct';
+      targetUsed[i] = true;
+    }
+  }
+
+  // Second pass: mark present letters
+  for (let i = 0; i < g.length; i++) {
+    if (feedback[i] === 'correct') continue;
+    for (let j = 0; j < t.length; j++) {
+      if (!targetUsed[j] && g[i] === t[j]) {
+        feedback[i] = 'present';
+        targetUsed[j] = true;
+        break;
+      }
+    }
+  }
+
+  return feedback;
+}
+
+export function submitLingoGuess(
+  roomId: string,
+  playerId: string,
+  guess: string,
+  room: GameRoom
+): LingoGuessResult | null {
+  const instance = activeGames.get(roomId);
+  if (!instance || instance.puzzle.type !== 'lingo') return null;
+
+  const tracker = instance.playerTrackers.get(playerId);
+  if (!tracker || tracker.finished) return null;
+
+  const puzzle = instance.puzzle as LingoPuzzle;
+  const wordIdx = tracker.lingoCurrentWordIndex;
+  if (wordIdx >= puzzle.words.length) return null;
+
+  // Validate guess
+  if (!isValidLingoGuess(guess)) return null;
+
+  const normalizedGuess = guess.toUpperCase().trim();
+  const targetWord = puzzle.words[wordIdx].toUpperCase();
+
+  // Compute feedback
+  const feedback = computeLingoFeedback(normalizedGuess, targetWord);
+
+  // Store the guess
+  const guesses = tracker.lingoGuessesPerWord.get(wordIdx) ?? [];
+  guesses.push({ word: normalizedGuess, feedback });
+  tracker.lingoGuessesPerWord.set(wordIdx, guesses);
+
+  const correct = normalizedGuess === targetWord;
+  const maxGuesses = 5;
+  const wordComplete = correct || guesses.length >= maxGuesses;
+
+  if (correct) {
+    // Award points: 100 base + 20 per unused guess
+    const unusedGuesses = maxGuesses - guesses.length;
+    tracker.score += 100 + (unusedGuesses * 20);
+    tracker.correctAnswers++;
+    tracker.lingoCompletedWords.push({ guessed: true, guessCount: guesses.length });
+  } else if (guesses.length >= maxGuesses) {
+    // Failed this word
+    tracker.lingoCompletedWords.push({ guessed: false, guessCount: maxGuesses });
+    // In limited mode, each failed word costs a life
+    if (room.settings.attemptsMode === 'limited') {
+      tracker.wrongGuesses++;
+    }
+  }
+
+  let playerFinished = false;
+  let playerEliminated = false;
+  let previousWord: string | undefined;
+
+  if (wordComplete) {
+    previousWord = targetWord;
+
+    // Check elimination
+    if (room.settings.attemptsMode === 'limited' && tracker.wrongGuesses >= room.settings.maxAttempts) {
+      playerEliminated = true;
+      tracker.finished = true;
+      tracker.endTime = Date.now();
+      playerFinished = true;
+    } else if (wordIdx + 1 >= puzzle.words.length) {
+      // All words attempted
+      tracker.finished = true;
+      tracker.endTime = Date.now();
+      playerFinished = true;
+      // Speed bonus
+      const timeTaken = tracker.endTime - tracker.startTime;
+      if (room.settings.timeLimitSeconds) {
+        const bonus = Math.max(0, Math.floor((room.settings.timeLimitSeconds * 1000 - timeTaken) / 1000) * 2);
+        tracker.score += bonus;
+      }
+    } else {
+      // Advance to next word
+      tracker.lingoCurrentWordIndex++;
+    }
+  }
+
+  return {
+    correct,
+    feedback,
+    wordComplete,
+    previousWord,
+    playerFinished,
+    playerEliminated,
+  };
+}
+
 // ─── Fuzzy matching ────────────────────────────────────
 function dutchStem(word: string): string {
   const w = word.toLowerCase().trim();
@@ -586,6 +760,10 @@ export function getPlayerProgress(roomId: string): PlayerProgress[] {
         solvedCount += answers.length;
       }
     }
+    // For lingo, count correctly guessed words
+    if (instance.puzzle.type === 'lingo') {
+      solvedCount = tracker.lingoCompletedWords.filter((w) => w.guessed).length;
+    }
     progress.push({
       playerId,
       solvedCount,
@@ -646,6 +824,11 @@ export function getRoundResult(roomId: string, room: GameRoom): RoundResult | nu
         }
       }
     }
+    // For lingo, groupsFound = correctly guessed words
+    if (instance.puzzle.type === 'lingo') {
+      groupsFound = tracker.lingoCompletedWords.filter((w) => w.guessed).length;
+      correctAnswers = groupsFound;
+    }
 
     results.push({
       playerId: player.id,
@@ -673,7 +856,9 @@ export function getRoundResult(roomId: string, room: GameRoom): RoundResult | nu
       ? (instance.puzzle as OpenDeurPuzzle).questions
       : instance.puzzle.type === 'connections'
         ? (instance.puzzle as ConnectionsPuzzle).groups
-        : (instance.puzzle as PuzzelrondePuzzle).groups,
+        : instance.puzzle.type === 'lingo'
+          ? (instance.puzzle as LingoPuzzle).words
+          : (instance.puzzle as PuzzelrondePuzzle).groups,
   };
 
   // Clean up game instance

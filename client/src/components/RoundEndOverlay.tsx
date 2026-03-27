@@ -202,9 +202,23 @@ export default function RoundEndOverlay({
                   {result.correctGroups.map((group, i) => {
                     const isConnections = result.roundType === "connections";
                     const isOpenDeur = result.roundType === "opendeur";
+                    const isLingo = result.roundType === "lingo";
                     const cGroup = group as ConnectionsGroup;
                     const pGroup = group as PuzzelrondeGroup;
                     const oGroup = group as OpenDeurQuestion;
+
+                    if (isLingo) {
+                      return (
+                        <div
+                          key={i}
+                          className="p-3 rounded-xl bg-green-50"
+                        >
+                          <p className="font-display font-bold text-sm">
+                            Woord {i + 1}: {group as string}
+                          </p>
+                        </div>
+                      );
+                    }
 
                     return (
                       <div

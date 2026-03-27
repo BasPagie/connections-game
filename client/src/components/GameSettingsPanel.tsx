@@ -41,6 +41,13 @@ const ROUND_TYPES: {
     color: "text-amber-700",
     activeBg: "bg-amber-500",
   },
+  {
+    type: "lingo",
+    icon: "🟩",
+    label: "Lingo",
+    color: "text-green-700",
+    activeBg: "bg-green-600",
+  },
 ];
 
 const DIFFICULTIES: { value: PuzzleDifficulty; label: string; dot: string }[] =
