@@ -67,15 +67,27 @@ export default function Lobby() {
     );
   }
 
+  const handleLeave = () => {
+    if (socket) socket.emit("leave-room");
+    navigate("/");
+  };
+
   return (
     <div className="h-screen overflow-y-auto py-6 px-4">
       <div className="max-w-6xl mx-auto">
-        {/* Title centered */}
+        {/* Title row with back button */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-center mb-3"
+          className="flex items-center justify-center relative mb-3"
         >
+          <button
+            onClick={handleLeave}
+            className="absolute left-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg 
+                       bg-gray-100 hover:bg-gray-200 text-gray-600 font-display font-bold text-xs transition-colors"
+          >
+            ← Terug
+          </button>
           <h1
             className="font-display font-black text-3xl text-transparent bg-clip-text 
                         bg-gradient-to-r from-brand-500 to-orange-500"
@@ -235,6 +247,14 @@ export default function Lobby() {
                   long="Ook van De Slimste Mens! 3 vragen met elk 4 juiste antwoorden. Typ ze zo snel mogelijk — 50 punten per goed antwoord. Geen straf voor fout, dus gewoon proberen. Vraag overslaan kan ook."
                 />
 
+                <GameModeCard
+                  icon="🟩"
+                  name="Lingo"
+                  color="green"
+                  short="Raad het 5-letter woord in zo min mogelijk beurten."
+                  long="Gebaseerd op het populaire TV-programma Lingo! Je krijgt de eerste letter als hint en hebt 5 pogingen om het woord te raden. Groene letter = juiste plek, gele letter = zit in het woord maar verkeerde plek, grijs = zit er niet in. 100 punten per geraden woord + 20 bonus per ongebruikte poging. 3 woorden per ronde."
+                />
+
                 <div className="border-t border-gray-100 pt-3">
                   <p className="font-display font-bold text-gray-700 mb-1.5">
                     💡 Goed om te weten
@@ -266,11 +286,13 @@ const BG_COLORS: Record<string, string> = {
   blue: "bg-blue-50",
   purple: "bg-purple-50",
   amber: "bg-amber-50",
+  green: "bg-green-50",
 };
 const TEXT_COLORS: Record<string, string> = {
   blue: "text-blue-700",
   purple: "text-purple-700",
   amber: "text-amber-700",
+  green: "text-green-700",
 };
 
 function GameModeCard({

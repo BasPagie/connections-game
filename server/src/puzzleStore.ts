@@ -1,4 +1,4 @@
-import type { ConnectionsPuzzle, PuzzelrondePuzzle, OpenDeurPuzzle } from '../../shared/types.js';
+import type { ConnectionsPuzzle, PuzzelrondePuzzle, OpenDeurPuzzle, LingoPuzzle } from '../../shared/types.js';
 
 const connectionsPuzzles: ConnectionsPuzzle[] = [
   // ═══════════════════════════════════════════
@@ -1063,4 +1063,122 @@ const openDeurPuzzles: OpenDeurPuzzle[] = [
 
 export function getOpenDeurPuzzles(): OpenDeurPuzzle[] {
   return openDeurPuzzles;
+}
+
+// ═══════════════════════════════════════════════════════
+//  LINGO PUZZLES — 5 five-letter Dutch words per puzzle
+// ═══════════════════════════════════════════════════════
+
+const lingoPuzzles: LingoPuzzle[] = [
+  // ═══════════════════════════════════════════
+  //  EASY — common Dutch words
+  // ═══════════════════════════════════════════
+  { id: 'li-e1', type: 'lingo', difficulty: 'easy', words: ['APPEL', 'KAART', 'BLOEM'] },
+  { id: 'li-e2', type: 'lingo', difficulty: 'easy', words: ['PAARD', 'WATER', 'BROOD'] },
+  { id: 'li-e3', type: 'lingo', difficulty: 'easy', words: ['TAFEL', 'GROEP', 'AVOND'] },
+  { id: 'li-e4', type: 'lingo', difficulty: 'easy', words: ['SPORT', 'VLEES', 'GROEN'] },
+  { id: 'li-e5', type: 'lingo', difficulty: 'easy', words: ['PLEIN', 'VOGEL', 'TOREN'] },
+  { id: 'li-e6', type: 'lingo', difficulty: 'easy', words: ['KAMER', 'DRAAK', 'PLANT'] },
+  { id: 'li-e7', type: 'lingo', difficulty: 'easy', words: ['STEEN', 'LEVEN', 'FEEST'] },
+  { id: 'li-e8', type: 'lingo', difficulty: 'easy', words: ['MOLEN', 'KRUIS', 'DRAAD'] },
+  { id: 'li-e9', type: 'lingo', difficulty: 'easy', words: ['HEMEL', 'KRING', 'SLANG'] },
+  { id: 'li-e10', type: 'lingo', difficulty: 'easy', words: ['MAAND', 'HAVEN', 'SPOOR'] },
+
+  // ═══════════════════════════════════════════
+  //  MEDIUM — less common words
+  // ═══════════════════════════════════════════
+  { id: 'li-m1', type: 'lingo', difficulty: 'medium', words: ['KWART', 'DWEIL', 'PLANK'] },
+  { id: 'li-m2', type: 'lingo', difficulty: 'medium', words: ['KREUK', 'VLOEK', 'TROEF'] },
+  { id: 'li-m3', type: 'lingo', difficulty: 'medium', words: ['PLUIM', 'GREEP', 'ZWEET'] },
+  { id: 'li-m4', type: 'lingo', difficulty: 'medium', words: ['FORUM', 'DWARS', 'GEBIT'] },
+  { id: 'li-m5', type: 'lingo', difficulty: 'medium', words: ['BONUS', 'KLAMP', 'FRIET'] },
+  { id: 'li-m6', type: 'lingo', difficulty: 'medium', words: ['GRAAN', 'KLOOF', 'POETS'] },
+  { id: 'li-m7', type: 'lingo', difficulty: 'medium', words: ['PRUIM', 'STEEG', 'DWANG'] },
+  { id: 'li-m8', type: 'lingo', difficulty: 'medium', words: ['KRAMP', 'GLOED', 'TWIJG'] },
+  { id: 'li-m9', type: 'lingo', difficulty: 'medium', words: ['STRIK', 'KWAAL', 'GELUK'] },
+  { id: 'li-m10', type: 'lingo', difficulty: 'medium', words: ['DRAAI', 'GLIMP', 'KOETS'] },
+
+  // ═══════════════════════════════════════════
+  //  HARD — uncommon or tricky words
+  // ═══════════════════════════════════════════
+  { id: 'li-h1', type: 'lingo', difficulty: 'hard', words: ['SFEER', 'KWINK', 'PLOOI'] },
+  { id: 'li-h2', type: 'lingo', difficulty: 'hard', words: ['ZWOEL', 'GRIJP', 'KLUIT'] },
+  { id: 'li-h3', type: 'lingo', difficulty: 'hard', words: ['KROEG', 'STEMP', 'FLOEP'] },
+  { id: 'li-h4', type: 'lingo', difficulty: 'hard', words: ['SNAUW', 'GLIMP', 'TROEP'] },
+  { id: 'li-h5', type: 'lingo', difficulty: 'hard', words: ['GRUIS', 'ZWEEP', 'DROEG'] },
+  { id: 'li-h6', type: 'lingo', difficulty: 'hard', words: ['ZWIER', 'PLUIS', 'DREUN'] },
+  { id: 'li-h7', type: 'lingo', difficulty: 'hard', words: ['SLOOP', 'GRENS', 'DWING'] },
+  { id: 'li-h8', type: 'lingo', difficulty: 'hard', words: ['DRUIF', 'STOER', 'GRIEP'] },
+  { id: 'li-h9', type: 'lingo', difficulty: 'hard', words: ['KREEF', 'GLANS', 'PLOEG'] },
+  { id: 'li-h10', type: 'lingo', difficulty: 'hard', words: ['DWERG', 'SMELT', 'GROEI'] },
+];
+
+// Valid 5-letter Dutch words for guess validation
+const validLingoWords = new Set<string>([
+  // Common words
+  'APPEL', 'AARDE', 'AARTS', 'ABDIJ', 'ABOUT', 'ADRES', 'ADELT', 'AFVAL',
+  'AGENT', 'AKKER', 'ALARM', 'ALBUM', 'ALIAS', 'AMPER', 'ANGEL', 'ANGST',
+  'ANKER', 'AVANT', 'AVOND', 'BAARD', 'BAKER', 'BAKEN', 'BALIE', 'BANGE',
+  'BASIS', 'BEEST', 'BEGIN', 'BELEG', 'BENDE', 'BEREIK', 'BERGE', 'BEZEM',
+  'BIBEB', 'BIDET', 'BIEST', 'BINGO', 'BLAAR', 'BLANK', 'BLEEK', 'BLIEP',
+  'BLIJS', 'BLIND', 'BLOEI', 'BLOEM', 'BLOKT', 'BLOND', 'BLOOT', 'BODEM',
+  'BONEN', 'BONUS', 'BOMEN', 'BOORD', 'BOTER', 'BRAND', 'BREED', 'BRIEF',
+  'BRIES', 'BROEK', 'BROOD', 'BROER', 'BRUID', 'BRUIN', 'BRUIS', 'BUURT',
+  'CHAOS', 'COBRA', 'COYPU', 'CRIME', 'CURVE', 'CYAAN',
+  'DADER', 'DARMT', 'DATUM', 'DEKEN', 'DELEN', 'DELTA', 'DRAAD', 'DRAAF',
+  'DRAAI', 'DRAAK', 'DREIG', 'DREUN', 'DRINK', 'DROEG', 'DROOG', 'DROST',
+  'DRUIF', 'DWAAL', 'DWAAS', 'DWANG', 'DWARS', 'DWEIL', 'DWERG', 'DWING',
+  'ELAND', 'ETAGE', 'EVEN­', 'EMAIL',
+  'FEEST', 'FIETS', 'FILET', 'FLETS', 'FLOEP', 'FORUM', 'FRIET', 'FRUIT',
+  'FUSIE',
+  'GAZON', 'GEBED', 'GEBIT', 'GELEI', 'GELUK', 'GEMAK', 'GETAL', 'GEZEL',
+  'GLANS', 'GLIMP', 'GLOED', 'GNOOM', 'GOOKT', 'GRAAN', 'GRAUW', 'GREEP',
+  'GREIG', 'GREIK', 'GREML', 'GRENS', 'GRIEP', 'GRIJP', 'GROEF', 'GROEN',
+  'GROEI', 'GROEP', 'GROFT', 'GRUIS', 'GUNST',
+  'HAVEN', 'HEKEL', 'HEMEL', 'HORDE', 'HOEST', 'HOTEL', 'HOVER', 'HULDE',
+  'IDEAA', 'IKOON', 'IVOOR',
+  'JEUGD', 'JOKER', 'JUBEL',
+  'KABEL', 'KAART', 'KAMER', 'KAVEL', 'KLAMP', 'KLEUR', 'KLOOF', 'KLUIT',
+  'KNOOP', 'KOETS', 'KOMST', 'KOPEN', 'KORST', 'KRAMP', 'KREEF', 'KREUK',
+  'KRING', 'KROEG', 'KRUIK', 'KRUIS', 'KWAAL', 'KWAAM', 'KWART', 'KWAST',
+  'KWEEK', 'KWELT', 'KWETS', 'KWINK',
+  'LAKEN', 'LASER', 'LEGEN', 'LEVER', 'LEVEN', 'LICHT', 'LIJKT', 'LINKS',
+  'LITER', 'LUCHT', 'LUNCH',
+  'MAAND', 'MACHT', 'MANGO', 'MARGE', 'MEDIA', 'MELKS', 'MELIG', 'METER',
+  'MODEL', 'MOLEN', 'MOTOR', 'MUREN',
+  'NACHT', 'NAALD', 'NAGEL', 'NATIR', 'NAVEL', 'NEGEN', 'NERTS', 'NEVEL',
+  'NOTIE', 'NYLON',
+  'OFFER', 'OMEGA', 'OPZET', 'ORGEL', 'OTTER', 'OUDER',
+  'PAARD', 'PANEL', 'PASTA', 'PAUZE', 'PIANO', 'PLAAT', 'PLANK', 'PLANT',
+  'PLEIN', 'PLOEG', 'PLOOI', 'PLOMB', 'PLONS', 'PLUIM', 'PLUIS', 'POETS',
+  'POLIS', 'POORT', 'PRIJS', 'PRUIK', 'PRUIM', 'PSALM',
+  'RAILS', 'RAVEN', 'REDEN', 'REEKS', 'REGEN', 'REGIO', 'ROBOT', 'ROMAN',
+  'SALDO', 'SCENE', 'SFEER', 'SJEIK', 'SLANG', 'SLEEP', 'SLOOP', 'SLOOT',
+  'SMART', 'SMELT', 'SNAUW', 'SNEEUW', 'SPEEL', 'SPOOR', 'SPORT', 'STEEG',
+  'STEEN', 'STEMP', 'STOEP', 'STOEL', 'STOER', 'STREP', 'STRIK', 'STROP',
+  'STUIF', 'STUKS',
+  'TAFEL', 'TAKEN', 'TEMPO', 'THEMA', 'TOREN', 'TROEF', 'TROEP', 'TWIJG',
+  'UITSM', 'ULTRA',
+  'VLEES', 'VLOEK', 'VLOOT', 'VOGEL', 'VRAAG',
+  'WAGEN', 'WATER', 'WENST', 'WERKT', 'WINST', 'WORST',
+  'ZEBRA', 'ZWALP', 'ZWART', 'ZWEEP', 'ZWEET', 'ZWERM', 'ZWIER', 'ZWOEL',
+  // Include all puzzle words
+  'SCHOOL', 'BAKER', 'DEKEN', 'HAVEN', 'SPOOR', 'HEMEL', 'WAGEN',
+  'HUIS­', 'BERG­', 'BLOEM', 'STOEL', 'BROOD', 'BRIEF', 'GROEP',
+  'AVOND', 'REGEN', 'PLANT', 'LEVEN', 'FEEST', 'PRIJS', 'BOTER',
+  'MOLEN', 'KRUIK', 'DRAAD', 'STOEP', 'KRING', 'SLANG', 'PLAAT',
+  'MAAND', 'HAVEN', 'SPOOR', 'DEKEN', 'FRUIT', 'BELEG', 'GRAAN',
+]);
+
+export function getLingoPuzzles(): LingoPuzzle[] {
+  return lingoPuzzles;
+}
+
+export function isValidLingoGuess(word: string): boolean {
+  // Accept any 5-letter alphabetic string (we don't strictly validate against a dictionary
+  // to keep the game accessible, but we do check length and characters)
+  const normalized = word.toUpperCase().trim();
+  if (normalized.length !== 5) return false;
+  if (!/^[A-Z]+$/.test(normalized)) return false;
+  return true;
 }

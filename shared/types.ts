@@ -9,7 +9,7 @@ export interface Player {
 }
 
 // ─── Game Settings ─────────────────────────────────────
-export type RoundType = 'connections' | 'puzzelronde' | 'opendeur';
+export type RoundType = 'connections' | 'puzzelronde' | 'opendeur' | 'lingo';
 export type AttemptsMode = 'limited' | 'unlimited';
 export type PuzzleDifficulty = 'easy' | 'medium' | 'hard';
 
@@ -17,7 +17,7 @@ export interface RoundConfig {
   type: RoundType;
   difficulty: PuzzleDifficulty;
   puzzleId?: string; // undefined = random
-  customPuzzle?: ConnectionsPuzzle | PuzzelrondePuzzle | OpenDeurPuzzle;
+  customPuzzle?: ConnectionsPuzzle | PuzzelrondePuzzle | OpenDeurPuzzle | LingoPuzzle;
 }
 
 export interface GameSettings {
@@ -32,8 +32,9 @@ export interface GameSettings {
 export const DEFAULT_SETTINGS: GameSettings = {
   rounds: [
     { type: 'connections', difficulty: 'medium' },
-    { type: 'puzzelronde', difficulty: 'medium' },
     { type: 'opendeur', difficulty: 'medium' },
+    { type: 'puzzelronde', difficulty: 'medium' },
+    { type: 'lingo', difficulty: 'medium' },
   ],
   attemptsMode: 'limited',
   maxAttempts: 6,
@@ -92,7 +93,27 @@ export interface OpenDeurPuzzle {
   questions: [OpenDeurQuestion, OpenDeurQuestion, OpenDeurQuestion];
 }
 
-export type Puzzle = ConnectionsPuzzle | PuzzelrondePuzzle | OpenDeurPuzzle;
+// ─── Lingo ─────────────────────────────────────────────
+export type LingoLetterFeedback = 'correct' | 'present' | 'absent';
+
+export interface LingoGuess {
+  word: string;
+  feedback: LingoLetterFeedback[];
+}
+
+export interface LingoWordResult {
+  guessed: boolean;
+  guessCount: number;
+}
+
+export interface LingoPuzzle {
+  id: string;
+  type: 'lingo';
+  difficulty: PuzzleDifficulty;
+  words: string[]; // 5 five-letter Dutch words
+}
+
+export type Puzzle = ConnectionsPuzzle | PuzzelrondePuzzle | OpenDeurPuzzle | LingoPuzzle;
 
 // ─── Round State (sent to clients) ────────────────────
 export interface ConnectionsRoundState {
@@ -123,7 +144,20 @@ export interface OpenDeurRoundState {
   timeRemainingMs: number | null;
 }
 
-export type RoundState = ConnectionsRoundState | PuzzelrondeRoundState | OpenDeurRoundState;
+export interface LingoRoundState {
+  type: 'lingo';
+  wordLength: number;
+  currentWordIndex: number;
+  totalWords: number;
+  firstLetter: string;
+  guesses: LingoGuess[];
+  maxGuessesPerWord: number;
+  completedWords: LingoWordResult[];
+  attemptsLeft: number | null;
+  timeRemainingMs: number | null;
+}
+
+export type RoundState = ConnectionsRoundState | PuzzelrondeRoundState | OpenDeurRoundState | LingoRoundState;
 
 // ─── Player Progress (shown to other players) ─────────
 export interface PlayerProgress {
@@ -149,7 +183,7 @@ export interface RoundResult {
   roundIndex: number;
   roundType: RoundType;
   results: PlayerRoundResult[];
-  correctGroups: ConnectionsGroup[] | PuzzelrondeGroup[] | OpenDeurQuestion[];
+  correctGroups: ConnectionsGroup[] | PuzzelrondeGroup[] | OpenDeurQuestion[] | string[];
 }
 
 // ─── Final Results ─────────────────────────────────────
@@ -175,6 +209,7 @@ export interface ClientToServerEvents {
   'submit-group': (data: { words: string[] }) => void;
   'submit-answer': (data: { answer: string }) => void;
   'submit-opendeur-answer': (data: { answer: string }) => void;
+  'submit-lingo-guess': (data: { guess: string }) => void;
   'skip-question': () => void;
   'next-round': () => void;
   'play-again': () => void;
@@ -194,6 +229,8 @@ export interface ServerToClientEvents {
   'answer-result': (data: { correct: boolean; correctAnswer?: string; roundState: RoundState }) => void;
   'opendeur-result': (data: { correct: boolean; matchedAnswer?: string; roundState: RoundState }) => void;
   'opendeur-next-question': (data: { roundState: RoundState; previousAnswers: string[] }) => void;
+  'lingo-result': (data: { correct: boolean; feedback?: LingoLetterFeedback[]; roundState: RoundState }) => void;
+  'lingo-next-word': (data: { roundState: RoundState; previousWord: string }) => void;
   'player-progress': (data: PlayerProgress[]) => void;
   'time-update': (data: { timeRemainingMs: number }) => void;
   'round-end': (data: RoundResult) => void;

@@ -7,6 +7,7 @@ import { useSocketEvents } from "../hooks/useSocketEvents";
 import ConnectionsGame from "../components/ConnectionsGame";
 import PuzzelrondeGame from "../components/PuzzelrondeGame";
 import OpenDeurGame from "../components/OpenDeurGame";
+import LingoGame from "../components/LingoGame";
 import TimerBar from "../components/TimerBar";
 import ProgressSidebar from "../components/ProgressSidebar";
 import RoundEndOverlay from "../components/RoundEndOverlay";
@@ -14,6 +15,7 @@ import type {
   ConnectionsRoundState,
   PuzzelrondeRoundState,
   OpenDeurRoundState,
+  LingoRoundState,
 } from "shared/types";
 
 export default function Game() {
@@ -49,6 +51,11 @@ export default function Game() {
   const handleSkipQuestion = () => {
     if (!socket) return;
     socket.emit("skip-question");
+  };
+
+  const handleSubmitLingoGuess = (guess: string) => {
+    if (!socket) return;
+    socket.emit("submit-lingo-guess", { guess });
   };
 
   const handleNextRound = () => {
@@ -122,7 +129,9 @@ export default function Game() {
       ? 4
       : state.roundState.type === "puzzelronde"
         ? 3
-        : 12; // opendeur: 3 questions × 4 answers
+        : state.roundState.type === "lingo"
+          ? 3 // 3 words
+          : 12; // opendeur: 3 questions × 4 answers
   const isLastRound = state.room.currentRoundIndex >= totalRounds - 1;
   const isSpectating = state.player?.isHost && !state.room.settings.hostPlays;
 
@@ -143,14 +152,18 @@ export default function Game() {
                   ? "bg-blue-100 text-blue-700"
                   : roundConfig?.type === "puzzelronde"
                     ? "bg-purple-100 text-purple-700"
-                    : "bg-amber-100 text-amber-700"
+                    : roundConfig?.type === "lingo"
+                      ? "bg-green-100 text-green-700"
+                      : "bg-amber-100 text-amber-700"
               }`}
             >
               {roundConfig?.type === "connections"
                 ? "🔗 Connections"
                 : roundConfig?.type === "puzzelronde"
                   ? "🧩 Puzzelronde"
-                  : "🚪 Open Deur"}
+                  : roundConfig?.type === "lingo"
+                    ? "🟩 Lingo"
+                    : "🚪 Open Deur"}
             </span>
             <span className="text-sm text-gray-400 font-display">
               Ronde {currentRound} van {totalRounds}
@@ -206,6 +219,11 @@ export default function Game() {
                     maxAttempts={state.room.settings.maxAttempts}
                     lastAnswerResult={state.lastAnswerResult}
                     hintWords={state.hintWords}
+                  />
+                ) : state.roundState.type === "lingo" ? (
+                  <LingoGame
+                    roundState={state.roundState as LingoRoundState}
+                    onSubmitGuess={handleSubmitLingoGuess}
                   />
                 ) : (
                   <OpenDeurGame

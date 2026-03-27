@@ -22,6 +22,7 @@ import {
   submitAnswer,
   submitOpenDeurAnswer,
   skipOpenDeurQuestion,
+  submitLingoGuess,
   getPlayerProgress,
   isRoundComplete,
   forceEndRound,
@@ -321,6 +322,44 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
       roundState,
       previousAnswers: result.previousAnswers,
     });
+
+    // Broadcast progress
+    const progress = getPlayerProgress(mapping.roomId);
+    io.to(mapping.roomId).emit('player-progress', progress);
+
+    if (isRoundComplete(mapping.roomId)) {
+      endCurrentRound(io, mapping.roomId);
+    }
+  });
+
+  // ─── Submit Lingo Guess ──────────────────────────────
+  socket.on('submit-lingo-guess', ({ guess }) => {
+    if (isRateLimited(socket.id)) return;
+    const mapping = getSocketMapping(socket.id);
+    if (!mapping) return;
+
+    const room = getRoom(mapping.roomId);
+    if (!room || room.status !== 'playing') return;
+
+    const result = submitLingoGuess(mapping.roomId, mapping.playerId, guess, room);
+    if (!result) return;
+
+    const roundState = getPlayerRoundState(mapping.roomId, mapping.playerId, room);
+    if (!roundState) return;
+
+    if (result.wordComplete && result.previousWord && !result.playerFinished) {
+      // Word complete, advancing to next word
+      socket.emit('lingo-next-word', {
+        roundState,
+        previousWord: result.previousWord,
+      });
+    } else {
+      socket.emit('lingo-result', {
+        correct: result.correct,
+        feedback: result.feedback,
+        roundState,
+      });
+    }
 
     // Broadcast progress
     const progress = getPlayerProgress(mapping.roomId);

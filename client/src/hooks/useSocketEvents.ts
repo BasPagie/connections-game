@@ -71,6 +71,14 @@ export function useSocketEvents() {
       dispatch({ type: 'UPDATE_ROUND_STATE', roundState });
     });
 
+    socket.on('lingo-result', ({ correct, feedback, roundState }) => {
+      dispatch({ type: 'UPDATE_ROUND_STATE', roundState });
+    });
+
+    socket.on('lingo-next-word', ({ roundState, previousWord }) => {
+      dispatch({ type: 'UPDATE_ROUND_STATE', roundState });
+    });
+
     socket.on('player-progress', (progress) => {
       dispatch({ type: 'PLAYER_PROGRESS', progress });
     });
@@ -112,6 +120,8 @@ export function useSocketEvents() {
       socket.off('answer-result');
       socket.off('opendeur-result');
       socket.off('opendeur-next-question');
+      socket.off('lingo-result');
+      socket.off('lingo-next-word');
       socket.off('player-progress');
       socket.off('round-end');
       socket.off('game-end');
