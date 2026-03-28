@@ -112,16 +112,24 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "PLAYER_LEFT":
       if (!state.room) return state;
-      // If disconnected (grace period), just mark as offline instead of removing
+      // If disconnected (grace period), mark as offline and handle host transfer
       if (action.disconnected) {
         return {
           ...state,
           room: {
             ...state.room,
-            players: state.room.players.map((p) =>
-              p.id === action.playerId ? { ...p, connected: false } : p,
-            ),
+            players: state.room.players.map((p) => {
+              if (p.id === action.playerId)
+                return { ...p, connected: false, isHost: false };
+              if (action.newHostId && p.id === action.newHostId)
+                return { ...p, isHost: true };
+              return p;
+            }),
           },
+          player:
+            state.player && action.newHostId === state.player.id
+              ? { ...state.player, isHost: true }
+              : state.player,
         };
       }
       return {

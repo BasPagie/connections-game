@@ -702,7 +702,6 @@ function dutchStem(word: string): string {
   if (w.endsWith('ren') && w.length > 4) return w.slice(0, -3);
   if (w.endsWith('enden') && w.length > 6) return w.slice(0, -5);
   if (w.endsWith('anden') && w.length > 6) return w.slice(0, -5);
-  if (w.endsWith('enden') && w.length > 6) return w.slice(0, -5);
   if (w.endsWith('en') && w.length > 3) return w.slice(0, -2);
   if (w.endsWith('es') && w.length > 3) return w.slice(0, -2);
   if (w.endsWith('s') && w.length > 3) return w.slice(0, -1);

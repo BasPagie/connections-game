@@ -36,11 +36,11 @@ app.get('*', (_req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log(`[Socket] Verbonden: ${socket.id}`);
+  console.log(`[Socket] Connected: ${socket.id}`);
   registerSocketHandlers(io, socket);
 });
 
 const PORT = process.env.PORT || 3001;
 server.listen(Number(PORT), '0.0.0.0', () => {
-  console.log(`🎮 Server draait op port ${PORT}`);
+  console.log(`🎮 Server running on port ${PORT}`);
 });

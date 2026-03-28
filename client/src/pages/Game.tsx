@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "../context/SocketContext";
 import { useGame } from "../context/GameContext";
 import { useSocketEvents } from "../hooks/useSocketEvents";
+import type { RoundType } from "shared/types";
 import ConnectionsGame from "../components/ConnectionsGame";
 import PuzzelrondeGame from "../components/PuzzelrondeGame";
 import OpenDeurGame from "../components/OpenDeurGame";
@@ -18,6 +19,38 @@ import type {
   LingoRoundState,
 } from "shared/types";
 
+const ROUND_META: Record<
+  RoundType,
+  { icon: string; label: string; bg: string; text: string }
+> = {
+  connections: {
+    icon: "🔗",
+    label: "Connections",
+    bg: "from-blue-600 to-blue-800",
+    text: "text-blue-100",
+  },
+  puzzelronde: {
+    icon: "🧩",
+    label: "Puzzelronde",
+    bg: "from-purple-600 to-purple-800",
+    text: "text-purple-100",
+  },
+  opendeur: {
+    icon: "🚪",
+    label: "Open Deur",
+    bg: "from-amber-500 to-amber-700",
+    text: "text-amber-100",
+  },
+  lingo: {
+    icon: "🟩",
+    label: "Lingo",
+    bg: "from-green-600 to-green-800",
+    text: "text-green-100",
+  },
+};
+
+const ROUND_INTRO_DURATION = 2500;
+
 export default function Game() {
   useSocketEvents();
 
@@ -25,6 +58,33 @@ export default function Game() {
   const navigate = useNavigate();
   const socket = useSocket();
   const { state } = useGame();
+  const [showRoundIntro, setShowRoundIntro] = useState(false);
+  const [introRoundType, setIntroRoundType] = useState<RoundType | null>(null);
+  const [introRoundNumber, setIntroRoundNumber] = useState(0);
+  const [introTotalRounds, setIntroTotalRounds] = useState(0);
+  const lastRoundIndexRef = useRef<number | null>(null);
+
+  // Show round intro when a new round starts
+  useEffect(() => {
+    if (
+      state.phase === "playing" &&
+      state.roundState &&
+      state.room &&
+      state.room.currentRoundIndex !== lastRoundIndexRef.current
+    ) {
+      lastRoundIndexRef.current = state.room.currentRoundIndex;
+      setIntroRoundType(state.roundState.type);
+      setIntroRoundNumber(state.room.currentRoundIndex + 1);
+      setIntroTotalRounds(state.room.settings.rounds.length);
+      setShowRoundIntro(true);
+
+      const timer = setTimeout(
+        () => setShowRoundIntro(false),
+        ROUND_INTRO_DURATION,
+      );
+      return () => clearTimeout(timer);
+    }
+  }, [state.phase, state.roundState, state.room?.currentRoundIndex]);
 
   // Navigate to results when game ends
   useEffect(() => {
@@ -104,6 +164,48 @@ export default function Game() {
           ) : (
             <div className="text-6xl animate-bounce">🎮</div>
           )}
+        </motion.div>
+      </div>
+    );
+  }
+
+  // Show round intro splash (Kahoot-style)
+  if (showRoundIntro && introRoundType) {
+    const meta = ROUND_META[introRoundType];
+    return (
+      <div
+        className={`h-screen flex items-center justify-center bg-gradient-to-b ${meta.bg}`}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.7 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ type: "spring", damping: 14, stiffness: 120 }}
+          className="text-center"
+        >
+          <motion.div
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            className="text-8xl sm:text-9xl mb-6"
+          >
+            {meta.icon}
+          </motion.div>
+          <motion.h1
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, type: "spring", damping: 12 }}
+            className="font-display font-black text-5xl sm:text-7xl text-white mb-4"
+          >
+            {meta.label}
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className={`font-display font-bold text-xl sm:text-2xl ${meta.text}`}
+          >
+            Ronde {introRoundNumber} van {introTotalRounds}
+          </motion.p>
         </motion.div>
       </div>
     );

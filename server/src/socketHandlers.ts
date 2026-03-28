@@ -95,7 +95,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     socket.join(result.room.roomId);
     socket.emit('room-created', { room: result.room, player: result.player });
     if (DEV_MODE) socket.emit('dev-mode-status', { enabled: true });
-    console.log(`[Room] Aangemaakt: ${result.room.roomId} door ${safeName}`);
+    console.log(`[Room] Created: ${result.room.roomId} by ${safeName}`);
   });
 
   // ─── Join Room ───────────────────────────────────────
@@ -114,7 +114,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     socket.emit('room-joined', { room: result.room, player: result.player });
     if (DEV_MODE) socket.emit('dev-mode-status', { enabled: true });
     socket.to(roomId).emit('player-joined', { player: result.player });
-    console.log(`[Room] ${safeName} is toegetreden tot ${roomId}`);
+    console.log(`[Room] ${safeName} joined ${roomId}`);
   });
 
   // ─── Leave Room ──────────────────────────────────────
@@ -131,6 +131,18 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
       socket.emit('error', { message: 'Alleen de host kan instellingen wijzigen.' });
       return;
     }
+
+    // Validate settings shape to prevent malformed data
+    if (!settings || !Array.isArray(settings.rounds) || settings.rounds.length === 0 || settings.rounds.length > 5) return;
+    const validTypes = ['connections', 'puzzelronde', 'opendeur', 'lingo'];
+    const validDifficulties = ['easy', 'medium', 'hard'];
+    for (const round of settings.rounds) {
+      if (!validTypes.includes(round.type) || !validDifficulties.includes(round.difficulty)) return;
+    }
+    if (settings.attemptsMode !== 'limited' && settings.attemptsMode !== 'unlimited') return;
+    if (typeof settings.maxAttempts !== 'number' || settings.maxAttempts < 1 || settings.maxAttempts > 10) return;
+    if (settings.timeLimitSeconds !== null && (typeof settings.timeLimitSeconds !== 'number' || settings.timeLimitSeconds < 0 || settings.timeLimitSeconds > 600)) return;
+    if (typeof settings.hostControl !== 'boolean' || typeof settings.hostPlays !== 'boolean') return;
 
     const success = updateSettings(mapping.roomId, settings);
     if (success) {
@@ -217,6 +229,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
   // ─── Submit Group Guess ──────────────────────────────
   socket.on('submit-group', ({ words }) => {
     if (isRateLimited(socket.id)) return;
+    if (!Array.isArray(words) || words.length !== 4 || !words.every(w => typeof w === 'string')) return;
     const mapping = getSocketMapping(socket.id);
     if (!mapping) return;
 
@@ -250,6 +263,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
   // ─── Submit Answer (Puzzelronde) ─────────────────────
   socket.on('submit-answer', ({ answer }) => {
     if (isRateLimited(socket.id)) return;
+    if (typeof answer !== 'string' || answer.length > 100) return;
     const mapping = getSocketMapping(socket.id);
     if (!mapping) return;
 
@@ -280,6 +294,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
   // ─── Submit Open Deur Answer ─────────────────────────
   socket.on('submit-opendeur-answer', ({ answer }) => {
     if (isRateLimited(socket.id)) return;
+    if (typeof answer !== 'string' || answer.length > 200) return;
     const mapping = getSocketMapping(socket.id);
     if (!mapping) return;
 
@@ -347,6 +362,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
   // ─── Submit Lingo Guess ──────────────────────────────
   socket.on('submit-lingo-guess', ({ guess }) => {
     if (isRateLimited(socket.id)) return;
+    if (typeof guess !== 'string' || guess.length > 10) return;
     const mapping = getSocketMapping(socket.id);
     if (!mapping) return;
 
@@ -459,6 +475,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
   // ─── Reconnect ────────────────────────────────────────
   socket.on('reconnect-attempt', ({ roomId, playerId }) => {
     if (typeof roomId !== 'string' || typeof playerId !== 'string') return;
+    if (roomId.length > 10 || playerId.length > 50) return;
 
     const result = reconnectPlayer(socket.id, roomId, playerId);
     if (!result) {
@@ -518,12 +535,12 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     // Notify others that the player is back
     socket.to(roomId).emit('player-joined', { player });
 
-    console.log(`[Room] Speler ${player.nickname} opnieuw verbonden met ${roomId}`);
+    console.log(`[Room] Player ${player.nickname} reconnected to ${roomId}`);
   });
 
   // ─── Disconnect ──────────────────────────────────────
   socket.on('disconnect', () => {
-    console.log(`[Socket] Verbinding verbroken: ${socket.id}`);
+    console.log(`[Socket] Disconnected: ${socket.id}`);
     socketEventTimestamps.delete(socket.id);
     handleDisconnect(io, socket);
   });
@@ -553,7 +570,7 @@ function handleLeave(io: IOServer, socket: IOSocket): void {
     });
   }
 
-  console.log(`[Room] Speler ${result.playerId} has verlaten ${result.roomId}`);
+  console.log(`[Room] Player ${result.playerId} left ${result.roomId}`);
 }
 
 const DISCONNECT_GRACE_MS = 30_000; // 30 seconds to reconnect
@@ -562,16 +579,20 @@ function handleDisconnect(io: IOServer, socket: IOSocket): void {
   const result = disconnectPlayer(socket.id);
   if (!result) return;
 
-  const { roomId, playerId } = result;
+  const { roomId, playerId, newHostId } = result;
   socket.leave(roomId);
 
-  console.log(`[Room] Speler ${playerId} losgekoppeld van ${roomId}, wacht ${DISCONNECT_GRACE_MS / 1000}s op herverbinding...`);
+  if (newHostId) {
+    console.log(`[Room] Host ${playerId} disconnected from ${roomId}, host transferred to ${newHostId}`);
+  } else {
+    console.log(`[Room] Player ${playerId} disconnected from ${roomId}, waiting ${DISCONNECT_GRACE_MS / 1000}s for reconnect...`);
+  }
 
   // Notify others that this player disconnected (but don't remove yet)
   const room = getRoom(roomId);
   if (room) {
     // Tell other players this player disconnected (they'll see connected: false)
-    io.to(roomId).emit('player-left', { playerId, disconnected: true });
+    io.to(roomId).emit('player-left', { playerId, disconnected: true, newHostId });
   }
 
   // Schedule permanent removal after grace period
@@ -598,7 +619,7 @@ function handleDisconnect(io: IOServer, socket: IOSocket): void {
       });
     }
 
-    console.log(`[Room] Speler ${playerId} definitief verwijderd uit ${roomId} (timeout)`);
+    console.log(`[Room] Player ${playerId} permanently removed from ${roomId} (timeout)`);
   });
 }
 

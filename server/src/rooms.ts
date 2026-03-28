@@ -111,7 +111,8 @@ export function leaveRoom(socketId: string): { roomId: string; playerId: string;
 }
 
 // Mark player as disconnected (but keep them in the room for reconnection)
-export function disconnectPlayer(socketId: string): { roomId: string; playerId: string } | null {
+// If the disconnected player was the host, immediately transfer host to another connected player.
+export function disconnectPlayer(socketId: string): { roomId: string; playerId: string; newHostId?: string } | null {
   const mapping = socketToRoom.get(socketId);
   if (!mapping) return null;
 
@@ -123,12 +124,26 @@ export function disconnectPlayer(socketId: string): { roomId: string; playerId: 
   }
 
   const player = room.players.find((p) => p.id === playerId);
-  if (player) {
-    player.connected = false;
+  if (!player) {
+    socketToRoom.delete(socketId);
+    return null;
   }
 
+  player.connected = false;
   socketToRoom.delete(socketId);
-  return { roomId, playerId };
+
+  // If this player was the host, transfer host immediately
+  let newHostId: string | undefined;
+  if (player.isHost) {
+    const nextHost = room.players.find((p) => p.id !== playerId && p.connected && !p.isBot);
+    if (nextHost) {
+      player.isHost = false;
+      nextHost.isHost = true;
+      newHostId = nextHost.id;
+    }
+  }
+
+  return { roomId, playerId, newHostId };
 }
 
 // Schedule a player removal after a grace period. Returns the playerId so caller can cancel.
@@ -262,14 +277,14 @@ export function removeBotFromRoom(roomId: string, playerId: string): boolean {
 
 function generateRoomId(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no I/O/0/1 to avoid confusion
-  let code = '';
-  for (let i = 0; i < 6; i++) {
-    code += chars[randomInt(chars.length)];
+  const MAX_RETRIES = 10;
+  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+    let code = '';
+    for (let i = 0; i < 6; i++) {
+      code += chars[randomInt(chars.length)];
+    }
+    if (!rooms.has(code)) return code;
   }
-  // Ensure uniqueness (with retry limit)
-  if (rooms.has(code)) {
-    // In the astronomically unlikely event of collision, try once more
-    return generateRoomId();
-  }
-  return code;
+  // Fallback: UUID-based code (should never happen in practice)
+  return Array.from({ length: 6 }, () => chars[randomInt(chars.length)]).join('');
 }
