@@ -215,6 +215,7 @@ export interface ClientToServerEvents {
   'next-round': () => void;
   'play-again': () => void;
   'update-score': (data: { playerId: string; score: number }) => void;
+  'kick-player': (data: { playerId: string }) => void;
   'dev-add-bot': () => void;
   'dev-remove-bot': (data: { playerId: string }) => void;
   'reconnect-attempt': (data: { roomId: string; playerId: string }) => void;
@@ -241,6 +242,7 @@ export interface ServerToClientEvents {
   'game-end': (data: FinalResults) => void;
   'score-updated': (data: { playerId: string; score: number }) => void;
   'error': (data: { message: string }) => void;
+  'kicked': () => void;
   'room-closed': () => void;
   'dev-mode-status': (data: { enabled: boolean }) => void;
   'reconnected': (data: { room: GameRoom; player: Player; roundState: RoundState | null; phase: 'lobby' | 'playing' | 'round-end' | 'finished'; roundResult: RoundResult | null; finalResults: FinalResults | null; playerProgress: PlayerProgress[] }) => void;

@@ -113,6 +113,10 @@ export function startRound(room: GameRoom): { roundState: RoundState; puzzle: Pu
   used.add(puzzle.id);
   usedPuzzles.set(room.roomId, used);
 
+  // Clean up any leftover game instance from a previous round (stops old timer)
+  const oldInstance = activeGames.get(room.roomId);
+  if (oldInstance?.timer) clearInterval(oldInstance.timer);
+
   // Initialize player trackers
   const playerTrackers = new Map<string, PlayerRoundTracker>();
   for (const player of room.players) {

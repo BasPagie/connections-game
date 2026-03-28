@@ -8,6 +8,7 @@ interface PlayerListProps {
   isHost?: boolean;
   hostPlays?: boolean;
   onUpdateScore?: (playerId: string, score: number) => void;
+  onKickPlayer?: (playerId: string) => void;
 }
 
 export default function PlayerList({
@@ -16,6 +17,7 @@ export default function PlayerList({
   isHost,
   hostPlays = true,
   onUpdateScore,
+  onKickPlayer,
 }: PlayerListProps) {
   return (
     <div className="space-y-2">
@@ -89,6 +91,18 @@ export default function PlayerList({
               className={`w-2.5 h-2.5 rounded-full flex-shrink-0 
                             ${player.connected ? "bg-green-400" : "bg-gray-300"}`}
             />
+
+            {/* Kick button (host only, not on self or host) */}
+            {isHost && !isMe && !player.isHost && onKickPlayer && (
+              <button
+                onClick={() => onKickPlayer(player.id)}
+                className="ml-1 w-6 h-6 flex items-center justify-center rounded-full
+                           text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors flex-shrink-0"
+                title="Verwijder speler"
+              >
+                ✕
+              </button>
+            )}
           </div>
         );
       })}

@@ -62,6 +62,22 @@ export function joinRoom(socketId: string, roomId: string, nickname: string, ava
   const room = rooms.get(roomId);
   if (!room) return null;
   if (room.status !== 'lobby') return null;
+
+  // Check if there's a disconnected player with the same nickname — reclaim their slot
+  const disconnected = room.players.find((p) => !p.connected && !p.isBot && p.nickname === nickname);
+  if (disconnected) {
+    disconnected.connected = true;
+    disconnected.avatarUrl = avatarUrl;
+    // Cancel any pending disconnect cleanup
+    const timer = disconnectTimers.get(disconnected.id);
+    if (timer) {
+      clearTimeout(timer);
+      disconnectTimers.delete(disconnected.id);
+    }
+    socketToRoom.set(socketId, { roomId, playerId: disconnected.id });
+    return { room, player: disconnected };
+  }
+
   if (room.players.length >= MAX_PLAYERS_PER_ROOM) return null;
 
   const playerId = uuidv4();
@@ -273,6 +289,40 @@ export function removeBotFromRoom(roomId: string, playerId: string): boolean {
 
   room.players.splice(idx, 1);
   return true;
+}
+
+// Kick a player from the room (host action). Returns the kicked player's socket ID if they were connected.
+export function kickPlayer(roomId: string, playerId: string): { socketId?: string } | null {
+  const room = rooms.get(roomId);
+  if (!room) return null;
+
+  const idx = room.players.findIndex((p) => p.id === playerId);
+  if (idx === -1) return null;
+
+  const player = room.players[idx];
+  // Can't kick the host
+  if (player.isHost) return null;
+
+  // Find and remove socket mapping
+  let socketId: string | undefined;
+  for (const [sid, mapping] of socketToRoom) {
+    if (mapping.roomId === roomId && mapping.playerId === playerId) {
+      socketId = sid;
+      socketToRoom.delete(sid);
+      break;
+    }
+  }
+
+  // Cancel any pending disconnect cleanup
+  const timer = disconnectTimers.get(playerId);
+  if (timer) {
+    clearTimeout(timer);
+    disconnectTimers.delete(playerId);
+  }
+
+  room.players.splice(idx, 1);
+
+  return { socketId };
 }
 
 function generateRoomId(): string {

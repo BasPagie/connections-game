@@ -29,7 +29,7 @@ export default function WaitingOverlay({
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring", damping: 15, stiffness: 120 }}
-        className="text-center px-6 py-8 max-w-sm w-full"
+        className="text-center px-6 py-8 max-w-sm w-full bg-white/90 backdrop-blur-sm rounded-3xl shadow-lg"
       >
         {/* Celebration */}
         <motion.div

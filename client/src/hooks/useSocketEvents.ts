@@ -110,6 +110,12 @@ export function useSocketEvents() {
       navigateRef.current('/');
     });
 
+    socket.on('kicked', () => {
+      clearSession();
+      dispatch({ type: 'RESET' });
+      navigateRef.current('/');
+    });
+
     socket.on('dev-mode-status', ({ enabled }) => {
       dispatch({ type: 'SET_DEV_MODE', enabled });
     });
@@ -138,6 +144,8 @@ export function useSocketEvents() {
 
     socket.on('reconnect-failed', () => {
       clearSession();
+      dispatch({ type: 'RESET' });
+      navigateRef.current('/');
     });
 
     return () => {
@@ -162,6 +170,7 @@ export function useSocketEvents() {
       socket.off('error');
       socket.off('time-update');
       socket.off('room-closed');
+      socket.off('kicked');
       socket.off('dev-mode-status');
       socket.off('reconnected');
       socket.off('reconnect-failed');

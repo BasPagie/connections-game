@@ -23,11 +23,12 @@ export default function TimerBar({
       initialized.current = false;
       return;
     }
+    const wasNull = lastServerMs.current === null;
     lastServerMs.current = timeRemainingMs;
     lastSyncTime.current = Date.now();
-    // Only force-set displayMs on the first tick (to kick-start the interval);
-    // subsequent ticks are picked up smoothly via the refs.
-    if (!initialized.current) {
+    // Force-set displayMs when first receiving a value (kick-start the interval)
+    // or when it was previously null (new round starting)
+    if (!initialized.current || wasNull) {
       setDisplayMs(timeRemainingMs);
       initialized.current = true;
     }

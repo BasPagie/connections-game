@@ -183,6 +183,10 @@ export default function Lobby() {
                 if (!socket) return;
                 socket.emit("update-score", { playerId, score });
               }}
+              onKickPlayer={(playerId) => {
+                if (!socket) return;
+                socket.emit("kick-player", { playerId });
+              }}
             />
           </motion.div>
 

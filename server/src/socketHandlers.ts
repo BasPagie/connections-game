@@ -16,6 +16,7 @@ import {
   isHost,
   addBotToRoom,
   removeBotFromRoom,
+  kickPlayer,
   disconnectPlayer,
   scheduleDisconnectCleanup,
   reconnectPlayer,
@@ -51,6 +52,9 @@ const roomRoundResults = new Map<string, RoundResult[]>();
 
 // Store countdown intervals per room for cleanup
 const roomCountdowns = new Map<string, ReturnType<typeof setInterval>>();
+
+// Guard against duplicate next-round clicks
+const roomAdvancing = new Set<string>();
 
 // Simple per-socket rate limiter
 const socketEventTimestamps = new Map<string, number[]>();
@@ -408,13 +412,23 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
 
     if (room.settings.hostControl && !isHost(mapping.roomId, mapping.playerId)) return;
 
+    // Guard: only allow advancing if the current round has actually ended
+    const storedResults = roomRoundResults.get(room.roomId) ?? [];
+    if (storedResults.length <= room.currentRoundIndex) return; // round hasn't ended yet
+
+    // Guard: prevent rapid double-clicks
+    if (roomAdvancing.has(room.roomId)) return;
+    roomAdvancing.add(room.roomId);
+
     room.currentRoundIndex++;
 
     if (room.currentRoundIndex >= room.settings.rounds.length) {
       // Game over
+      roomAdvancing.delete(room.roomId);
       endGame(io, room.roomId);
     } else {
       startNewRound(io, room.roomId);
+      roomAdvancing.delete(room.roomId);
     }
   });
 
@@ -470,6 +484,30 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     if (removeBotFromRoom(mapping.roomId, playerId)) {
       io.to(mapping.roomId).emit('player-left', { playerId });
     }
+  });
+
+  // ─── Kick Player ────────────────────────────────────
+  socket.on('kick-player', ({ playerId }) => {
+    if (typeof playerId !== 'string' || playerId.length > 50) return;
+    const mapping = getSocketMapping(socket.id);
+    if (!mapping) return;
+    if (!isHost(mapping.roomId, mapping.playerId)) return;
+
+    const room = getRoom(mapping.roomId);
+    if (!room || room.status !== 'lobby') return;
+
+    const result = kickPlayer(mapping.roomId, playerId);
+    if (!result) return;
+
+    // Notify the kicked player and remove them from the room channel
+    if (result.socketId) {
+      io.to(result.socketId).emit('kicked');
+      io.in(result.socketId).socketsLeave(mapping.roomId);
+    }
+
+    // Notify remaining players
+    io.to(mapping.roomId).emit('player-left', { playerId });
+    console.log(`[Room] Player ${playerId} kicked from ${mapping.roomId}`);
   });
 
   // ─── Reconnect ────────────────────────────────────────
@@ -705,7 +743,7 @@ function endCurrentRound(io: IOServer, roomId: string): void {
   if (!room) return;
 
   const roundResult = getRoundResult(roomId, room);
-  if (!roundResult) return;
+  if (!roundResult) return; // already ended (roundEnding flag or no instance)
 
   // Store round result
   const results = roomRoundResults.get(roomId) ?? [];
