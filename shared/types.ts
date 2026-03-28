@@ -139,7 +139,7 @@ export interface OpenDeurRoundState {
   currentQuestionIndex: number;
   question: string;
   foundAnswers: string[]; // answers the player has found so far
-  answerHints: string[]; // first letters of remaining answers, sorted alphabetically
+  answerHints: (string | null)[]; // per-slot: first letter hint if unfound, null if found (original answer order)
   totalAnswers: number; // always 4
   totalQuestions: number; // always 3
   timeRemainingMs: number | null;

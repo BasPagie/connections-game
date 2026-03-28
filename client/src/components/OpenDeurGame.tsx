@@ -93,14 +93,21 @@ export default function OpenDeurGame({
         </p>
       </motion.div>
 
-      {/* Found answers grid */}
+      {/* Answer slots grid — each slot corresponds to an original answer */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
-        {Array.from({ length: roundState.totalAnswers }).map((_, i) => {
-          const found = roundState.foundAnswers[i];
-          const isFlashing = found && flash === found;
-          const emptyIndex = i - roundState.foundAnswers.length;
-          const hints = roundState.answerHints ?? [];
-          const hint = !found ? (hints[emptyIndex] ?? "?") : null;
+        {(roundState.answerHints ?? []).map((hint, i) => {
+          const isFound = hint === null;
+          // Find which found answer belongs to this slot
+          // foundAnswers is in discovery order; match by counting nulls up to index i
+          const foundIndex = isFound
+            ? roundState.answerHints.slice(0, i + 1).filter((h) => h === null)
+                .length - 1
+            : -1;
+          const foundAnswer =
+            isFound && foundIndex >= 0
+              ? roundState.foundAnswers[foundIndex]
+              : null;
+          const isFlashing = foundAnswer && flash === foundAnswer;
 
           return (
             <motion.div
@@ -114,18 +121,18 @@ export default function OpenDeurGame({
               className={`h-11 sm:h-14 rounded-xl flex items-center justify-center font-display font-bold text-sm sm:text-lg
                 transition-all duration-300
                 ${
-                  found
+                  isFound
                     ? "bg-green-100 text-green-800 border-2 border-green-300"
                     : "bg-gray-100 text-gray-300 border-2 border-dashed border-gray-300"
                 }`}
             >
-              {found ? (
+              {isFound && foundAnswer ? (
                 <motion.span
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   transition={{ type: "spring", damping: 12 }}
                 >
-                  {found}
+                  {foundAnswer}
                 </motion.span>
               ) : (
                 <span className="font-display font-black text-gray-400 tracking-wider">

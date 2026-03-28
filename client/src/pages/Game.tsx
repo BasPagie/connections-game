@@ -12,6 +12,7 @@ import LingoGame from "../components/LingoGame";
 import TimerBar from "../components/TimerBar";
 import ProgressSidebar from "../components/ProgressSidebar";
 import RoundEndOverlay from "../components/RoundEndOverlay";
+import WaitingOverlay from "../components/WaitingOverlay";
 import type {
   ConnectionsRoundState,
   PuzzelrondeRoundState,
@@ -263,6 +264,13 @@ export default function Game() {
   const isLastRound = state.room.currentRoundIndex >= totalRounds - 1;
   const isSpectating = state.player?.isHost && !state.room.settings.hostPlays;
 
+  // Check if the current player finished early (but round isn't over yet)
+  const myProgress = state.playerProgress.find(
+    (p) => p.playerId === state.player?.id,
+  );
+  const isPlayerFinished =
+    !isSpectating && myProgress?.finished === true && state.phase === "playing";
+
   return (
     <div className="h-screen flex flex-col overflow-hidden px-2 sm:px-4 py-2 sm:py-3">
       <div className="max-w-5xl mx-auto w-full flex flex-col flex-1 min-h-0">
@@ -315,7 +323,7 @@ export default function Game() {
 
         <div className="flex gap-3 sm:gap-6 flex-1 min-h-0 items-center">
           {/* Main game area */}
-          <div className="flex-1 flex flex-col justify-center">
+          <div className="flex-1 flex flex-col justify-center relative">
             {/* Timer */}
             <TimerBar
               totalSeconds={state.room.settings.timeLimitSeconds ?? 120}
@@ -371,6 +379,18 @@ export default function Game() {
                 )}
               </>
             )}
+
+            {/* Waiting overlay when player finishes early */}
+            <AnimatePresence>
+              {isPlayerFinished && (
+                <WaitingOverlay
+                  myScore={myProgress?.score ?? 0}
+                  progress={state.playerProgress}
+                  players={state.room.players}
+                  currentPlayerId={state.player?.id}
+                />
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Sidebar */}

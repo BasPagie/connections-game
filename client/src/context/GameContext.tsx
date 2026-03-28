@@ -187,6 +187,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         roundState: action.roundState,
+        timeRemainingMs: null,
         hintWords: [],
         lastAnswerResult: null,
         playerProgress: [],
@@ -228,6 +229,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       return {
         ...state,
         roundState: null,
+        timeRemainingMs: null,
         currentRoundResult: null,
         phase: "playing",
       };
@@ -250,6 +252,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         player: action.player,
         room: action.room,
         roundState: action.roundState,
+        timeRemainingMs: null,
         currentRoundResult: action.roundResult,
         finalResults: action.finalResults,
         playerProgress: action.playerProgress,

@@ -14,16 +14,23 @@ export default function TimerBar({
   const [displayMs, setDisplayMs] = useState(timeRemainingMs);
   const lastServerMs = useRef(timeRemainingMs);
   const lastSyncTime = useRef(Date.now());
+  const initialized = useRef(false);
 
   // Sync when server sends a new value
   useEffect(() => {
     if (timeRemainingMs === null) {
       setDisplayMs(null);
+      initialized.current = false;
       return;
     }
     lastServerMs.current = timeRemainingMs;
     lastSyncTime.current = Date.now();
-    setDisplayMs(timeRemainingMs);
+    // Only force-set displayMs on the first tick (to kick-start the interval);
+    // subsequent ticks are picked up smoothly via the refs.
+    if (!initialized.current) {
+      setDisplayMs(timeRemainingMs);
+      initialized.current = true;
+    }
   }, [timeRemainingMs]);
 
   // Smooth local countdown between server ticks
@@ -34,7 +41,7 @@ export default function TimerBar({
       const elapsed = Date.now() - lastSyncTime.current;
       const remaining = Math.max(0, (lastServerMs.current ?? 0) - elapsed);
       setDisplayMs(remaining);
-    }, 100);
+    }, 50);
 
     return () => clearInterval(interval);
   }, [displayMs !== null && displayMs > 0]);

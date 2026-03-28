@@ -204,7 +204,7 @@ function buildRoundState(instance: GameInstance, room: GameRoom): RoundState {
       currentQuestionIndex: 0,
       question: firstQuestion.question,
       foundAnswers: [],
-      answerHints: firstQuestion.answers.map((a) => a[0].toUpperCase()).sort(),
+      answerHints: firstQuestion.answers.map((a) => a[0].toUpperCase()),
       totalAnswers: firstQuestion.answers.length,
       totalQuestions: puzzle.questions.length,
       timeRemainingMs,
@@ -286,10 +286,11 @@ export function getPlayerRoundState(roomId: string, playerId: string, room: Game
     const qIdx = tracker.currentQuestionIndex;
     const question = puzzle.questions[qIdx];
     const found = tracker.foundAnswersPerQuestion.get(qIdx) ?? [];
-    const remaining = question.answers.filter(
-      (a) => !found.some((f) => f.toLowerCase() === a.toLowerCase())
+    const foundLower = new Set(found.map((f) => f.toLowerCase()));
+    // Per-slot hints: null if found, first letter if still unfound (preserves original answer order)
+    const answerHints = question.answers.map((a) =>
+      foundLower.has(a.toLowerCase()) ? null : a[0].toUpperCase()
     );
-    const answerHints = remaining.map((a) => a[0].toUpperCase()).sort();
 
     return {
       type: 'opendeur',
