@@ -12,6 +12,7 @@ interface RoundEndOverlayProps {
   currentPlayerId?: string;
   isHost: boolean;
   isLastRound: boolean;
+  isSpectating?: boolean;
   onNextRound: () => void;
 }
 
@@ -27,6 +28,7 @@ export default function RoundEndOverlay({
   currentPlayerId,
   isHost,
   isLastRound,
+  isSpectating,
   onNextRound,
 }: RoundEndOverlayProps) {
   const myResult = result.results.find((r) => r.playerId === currentPlayerId);
@@ -44,13 +46,16 @@ export default function RoundEndOverlay({
         transition={{ type: "spring", damping: 20 }}
         className="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full max-h-[90vh] overflow-y-auto"
       >
-        <h2
-          className="font-display font-black text-3xl text-center text-transparent bg-clip-text
-                        bg-gradient-to-r from-brand-500 to-orange-500 mb-2"
-        >
-          {isLastRound
-            ? "Ronde Klaar! 🎉"
-            : `Ronde ${result.roundIndex + 1} Klaar!`}
+        <h2 className="font-display font-black text-3xl text-center mb-2">
+          <span
+            className="text-transparent bg-clip-text
+                        bg-gradient-to-r from-brand-500 to-orange-500"
+          >
+            {isLastRound
+              ? "Ronde Klaar!"
+              : `Ronde ${result.roundIndex + 1} Klaar!`}
+          </span>
+          {isLastRound && " 🎉"}
         </h2>
         <p className="text-center text-sm text-gray-500 mb-6">
           {result.roundType === "connections"
@@ -60,48 +65,60 @@ export default function RoundEndOverlay({
               : "🚪 Open Deur"}
         </p>
 
-        {/* Last round: only show own score */}
+        {/* Last round: show own score or spectator message */}
         {isLastRound ? (
           <div className="text-center py-6">
-            <p className="text-gray-500 font-display mb-2">
-              Jij hebt verdiend:
-            </p>
-            <motion.p
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: "spring", damping: 10, delay: 0.2 }}
-              className="font-display font-black text-6xl text-brand-600 mb-1"
-            >
-              +{myResult?.roundScore ?? 0}
-            </motion.p>
-            <p className="text-gray-400 font-display text-sm">
-              punten deze ronde
-            </p>
-            {myResult && (
-              <div className="flex justify-center gap-4 text-sm text-gray-500 mt-4">
-                {result.roundType === "opendeur" ? (
-                  <span>
-                    💡 {myResult.correctAnswers}{" "}
-                    {myResult.correctAnswers === 1 ? "antwoord" : "antwoorden"}
-                  </span>
-                ) : (
-                  <>
-                    <span>
-                      🎯 {myResult.groupsFound}{" "}
-                      {myResult.groupsFound === 1 ? "groep" : "groepen"}
-                    </span>
-                    {myResult.correctAnswers > 0 && (
+            {isSpectating ? (
+              <p className="text-gray-400 font-display">
+                👀 Je keek toe als toeschouwer
+              </p>
+            ) : (
+              <>
+                <p className="text-gray-500 font-display mb-2">
+                  Jij hebt verdiend:
+                </p>
+                <motion.p
+                  initial={{ scale: 0.5, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ type: "spring", damping: 10, delay: 0.2 }}
+                  className="font-display font-black text-6xl text-brand-600 mb-1"
+                >
+                  +{myResult?.roundScore ?? 0}
+                </motion.p>
+                <p className="text-gray-400 font-display text-sm">
+                  punten deze ronde
+                </p>
+                {myResult && (
+                  <div className="flex justify-center gap-4 text-sm text-gray-500 mt-4">
+                    {result.roundType === "opendeur" ? (
                       <span>
                         💡 {myResult.correctAnswers}{" "}
-                        {myResult.correctAnswers === 1 ? "woord" : "woorden"}
+                        {myResult.correctAnswers === 1
+                          ? "antwoord"
+                          : "antwoorden"}
                       </span>
+                    ) : (
+                      <>
+                        <span>
+                          🎯 {myResult.groupsFound}{" "}
+                          {myResult.groupsFound === 1 ? "groep" : "groepen"}
+                        </span>
+                        {myResult.correctAnswers > 0 && (
+                          <span>
+                            💡 {myResult.correctAnswers}{" "}
+                            {myResult.correctAnswers === 1
+                              ? "woord"
+                              : "woorden"}
+                          </span>
+                        )}
+                      </>
                     )}
-                  </>
+                    {myResult.wrongGuesses > 0 && (
+                      <span>❌ {myResult.wrongGuesses} fout</span>
+                    )}
+                  </div>
                 )}
-                {myResult.wrongGuesses > 0 && (
-                  <span>❌ {myResult.wrongGuesses} fout</span>
-                )}
-              </div>
+              </>
             )}
           </div>
         ) : (
@@ -209,10 +226,7 @@ export default function RoundEndOverlay({
 
                     if (isLingo) {
                       return (
-                        <div
-                          key={i}
-                          className="p-3 rounded-xl bg-green-50"
-                        >
+                        <div key={i} className="p-3 rounded-xl bg-green-50">
                           <p className="font-display font-bold text-sm">
                             Woord {i + 1}: {group as string}
                           </p>

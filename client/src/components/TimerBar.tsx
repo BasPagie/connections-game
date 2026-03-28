@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 
 interface TimerBarProps {
@@ -10,11 +10,40 @@ export default function TimerBar({
   totalSeconds,
   timeRemainingMs,
 }: TimerBarProps) {
-  if (timeRemainingMs === null) return null;
+  // Smooth client-side countdown that syncs with server ticks
+  const [displayMs, setDisplayMs] = useState(timeRemainingMs);
+  const lastServerMs = useRef(timeRemainingMs);
+  const lastSyncTime = useRef(Date.now());
+
+  // Sync when server sends a new value
+  useEffect(() => {
+    if (timeRemainingMs === null) {
+      setDisplayMs(null);
+      return;
+    }
+    lastServerMs.current = timeRemainingMs;
+    lastSyncTime.current = Date.now();
+    setDisplayMs(timeRemainingMs);
+  }, [timeRemainingMs]);
+
+  // Smooth local countdown between server ticks
+  useEffect(() => {
+    if (displayMs === null || displayMs <= 0) return;
+
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - lastSyncTime.current;
+      const remaining = Math.max(0, (lastServerMs.current ?? 0) - elapsed);
+      setDisplayMs(remaining);
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [displayMs !== null && displayMs > 0]);
+
+  if (displayMs === null) return null;
 
   const totalMs = totalSeconds * 1000;
-  const fraction = Math.max(0, Math.min(1, timeRemainingMs / totalMs));
-  const seconds = Math.ceil(timeRemainingMs / 1000);
+  const fraction = Math.max(0, Math.min(1, displayMs / totalMs));
+  const seconds = Math.ceil(displayMs / 1000);
   const isLow = seconds <= 10;
   const isCritical = seconds <= 5;
 

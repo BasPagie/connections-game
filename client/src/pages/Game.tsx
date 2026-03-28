@@ -63,6 +63,11 @@ export default function Game() {
     socket.emit("next-round");
   };
 
+  const handleBackToLobby = () => {
+    if (!socket) return;
+    socket.emit("play-again");
+  };
+
   // Show countdown overlay
   if (
     state.phase === "countdown" ||
@@ -100,6 +105,27 @@ export default function Game() {
             <div className="text-6xl animate-bounce">🎮</div>
           )}
         </motion.div>
+      </div>
+    );
+  }
+
+  // Show round-end overlay even without roundState (e.g. after reconnect)
+  if (state.phase === "round-end" && state.currentRoundResult && state.room) {
+    const totalRoundsRE = state.room.settings.rounds.length;
+    const isLastRoundRE = state.room.currentRoundIndex >= totalRoundsRE - 1;
+    const isSpectatingRE =
+      state.player?.isHost && !state.room.settings.hostPlays;
+
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
+        <RoundEndOverlay
+          result={state.currentRoundResult}
+          currentPlayerId={state.player?.id}
+          isHost={state.player?.isHost ?? false}
+          isLastRound={isLastRoundRE}
+          isSpectating={isSpectatingRE}
+          onNextRound={handleNextRound}
+        />
       </div>
     );
   }
@@ -142,8 +168,17 @@ export default function Game() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-3"
+          className="text-center mb-3 relative"
         >
+          {state.player?.isHost && (
+            <button
+              onClick={handleBackToLobby}
+              className="absolute left-0 top-0 flex items-center gap-1 px-3 py-1.5 rounded-lg
+                         bg-gray-100 hover:bg-gray-200 text-gray-600 font-display font-bold text-xs transition-colors"
+            >
+              ← Lobby
+            </button>
+          )}
           <div className="flex items-center justify-center gap-2 sm:gap-3 mb-2 flex-wrap">
             <span
               className={`px-3 py-1 rounded-full text-sm font-display font-bold
@@ -265,6 +300,7 @@ export default function Game() {
           currentPlayerId={state.player?.id}
           isHost={state.player?.isHost ?? false}
           isLastRound={isLastRound}
+          isSpectating={isSpectating}
           onNextRound={handleNextRound}
         />
       )}

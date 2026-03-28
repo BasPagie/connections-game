@@ -4,6 +4,7 @@ export interface Player {
   nickname: string;
   avatarUrl: string; // base64 data URL or path to pre-made avatar
   isHost: boolean;
+  isBot?: boolean;
   score: number;
   connected: boolean;
 }
@@ -214,13 +215,16 @@ export interface ClientToServerEvents {
   'next-round': () => void;
   'play-again': () => void;
   'update-score': (data: { playerId: string; score: number }) => void;
+  'dev-add-bot': () => void;
+  'dev-remove-bot': (data: { playerId: string }) => void;
+  'reconnect-attempt': (data: { roomId: string; playerId: string }) => void;
 }
 
 export interface ServerToClientEvents {
   'room-created': (data: { room: GameRoom; player: Player }) => void;
   'room-joined': (data: { room: GameRoom; player: Player }) => void;
   'player-joined': (data: { player: Player }) => void;
-  'player-left': (data: { playerId: string; newHostId?: string }) => void;
+  'player-left': (data: { playerId: string; newHostId?: string; disconnected?: boolean }) => void;
   'settings-updated': (settings: GameSettings) => void;
   'game-started': () => void;
   'countdown': (data: { count: number }) => void;
@@ -238,6 +242,9 @@ export interface ServerToClientEvents {
   'score-updated': (data: { playerId: string; score: number }) => void;
   'error': (data: { message: string }) => void;
   'room-closed': () => void;
+  'dev-mode-status': (data: { enabled: boolean }) => void;
+  'reconnected': (data: { room: GameRoom; player: Player; roundState: RoundState | null; phase: 'lobby' | 'playing' | 'round-end' | 'finished'; roundResult: RoundResult | null; finalResults: FinalResults | null; playerProgress: PlayerProgress[] }) => void;
+  'reconnect-failed': () => void;
 }
 
 // ─── Pre-made Avatars ──────────────────────────────────

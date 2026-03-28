@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "../context/SocketContext";
+import { clearSession } from "../context/SocketContext";
 import { useGame } from "../context/GameContext";
 import { useSocketEvents } from "../hooks/useSocketEvents";
 import PlayerList from "../components/PlayerList";
@@ -69,6 +70,7 @@ export default function Lobby() {
 
   const handleLeave = () => {
     if (socket) socket.emit("leave-room");
+    clearSession();
     navigate("/");
   };
 
@@ -198,6 +200,48 @@ export default function Lobby() {
             />
           </motion.div>
         </div>
+
+        {/* Dev Tools Panel */}
+        {state.devMode && isPlayerHost && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="mt-4 card border-2 border-dashed border-orange-300 bg-orange-50"
+          >
+            <h3 className="font-display font-bold text-sm text-orange-700 mb-3">
+              🛠️ Dev Tools
+            </h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => socket?.emit("dev-add-bot")}
+                className="px-3 py-1.5 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-display font-bold text-xs transition-colors"
+              >
+                + Bot toevoegen
+              </button>
+              {state.room.players
+                .filter((p) => p.isBot)
+                .map((bot) => (
+                  <span
+                    key={bot.id}
+                    className="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-orange-100 text-orange-700 text-xs font-display"
+                  >
+                    {bot.avatarUrl} {bot.nickname}
+                    <button
+                      onClick={() =>
+                        socket?.emit("dev-remove-bot", {
+                          playerId: bot.id,
+                        })
+                      }
+                      className="ml-1 hover:text-red-600 font-bold"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* Info Modal */}

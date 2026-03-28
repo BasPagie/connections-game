@@ -30,6 +30,7 @@ export interface GameState {
   phase: "idle" | "lobby" | "playing" | "countdown" | "round-end" | "finished";
   timeRemainingMs: number | null;
   errorMessage: string | null;
+  devMode: boolean;
 }
 
 const initialState: GameState = {
@@ -46,6 +47,7 @@ const initialState: GameState = {
   phase: "idle",
   timeRemainingMs: null,
   errorMessage: null,
+  devMode: false,
 };
 
 // ─── Actions ───────────────────────────────────────────
@@ -53,7 +55,12 @@ export type GameAction =
   | { type: "SET_PLAYER"; player: Player }
   | { type: "SET_ROOM"; room: GameRoom }
   | { type: "PLAYER_JOINED"; player: Player }
-  | { type: "PLAYER_LEFT"; playerId: string; newHostId?: string }
+  | {
+      type: "PLAYER_LEFT";
+      playerId: string;
+      newHostId?: string;
+      disconnected?: boolean;
+    }
   | { type: "SETTINGS_UPDATED"; settings: GameSettings }
   | { type: "GAME_STARTED" }
   | { type: "COUNTDOWN"; count: number }
@@ -72,6 +79,17 @@ export type GameAction =
   | { type: "TIME_UPDATE"; timeRemainingMs: number }
   | { type: "SET_ERROR"; message: string }
   | { type: "CLEAR_ERROR" }
+  | { type: "SET_DEV_MODE"; enabled: boolean }
+  | {
+      type: "RECONNECTED";
+      room: GameRoom;
+      player: Player;
+      roundState: RoundState | null;
+      phase: "lobby" | "playing" | "round-end" | "finished";
+      roundResult: RoundResult | null;
+      finalResults: FinalResults | null;
+      playerProgress: PlayerProgress[];
+    }
   | { type: "RESET" };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -94,6 +112,18 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "PLAYER_LEFT":
       if (!state.room) return state;
+      // If disconnected (grace period), just mark as offline instead of removing
+      if (action.disconnected) {
+        return {
+          ...state,
+          room: {
+            ...state.room,
+            players: state.room.players.map((p) =>
+              p.id === action.playerId ? { ...p, connected: false } : p,
+            ),
+          },
+        };
+      }
       return {
         ...state,
         room: {
@@ -202,6 +232,25 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case "CLEAR_ERROR":
       return { ...state, errorMessage: null };
+
+    case "SET_DEV_MODE":
+      return { ...state, devMode: action.enabled };
+
+    case "RECONNECTED":
+      return {
+        ...state,
+        player: action.player,
+        room: action.room,
+        roundState: action.roundState,
+        currentRoundResult: action.roundResult,
+        finalResults: action.finalResults,
+        playerProgress: action.playerProgress,
+        phase: action.phase,
+        countdown: null,
+        hintWords: [],
+        lastAnswerResult: null,
+        errorMessage: null,
+      };
 
     case "RESET":
       return initialState;

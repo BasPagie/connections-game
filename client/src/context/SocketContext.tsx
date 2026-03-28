@@ -12,6 +12,30 @@ type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 const SocketContext = createContext<GameSocket | null>(null);
 
+const SESSION_KEY = "game-session";
+
+export function saveSession(roomId: string, playerId: string) {
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify({ roomId, playerId }));
+  } catch {}
+}
+
+export function clearSession() {
+  try {
+    sessionStorage.removeItem(SESSION_KEY);
+  } catch {}
+}
+
+function getSession(): { roomId: string; playerId: string } | null {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed?.roomId && parsed?.playerId) return parsed;
+  } catch {}
+  return null;
+}
+
 export function SocketProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<GameSocket | null>(null);
 
@@ -27,6 +51,16 @@ export function SocketProvider({ children }: { children: ReactNode }) {
 
     s.on("connect", () => {
       console.log("[Socket] Verbonden:", s.id);
+
+      // Attempt reconnection if we have a saved session
+      const session = getSession();
+      if (session) {
+        console.log("[Socket] Herverbinden met sessie:", session.roomId);
+        s.emit("reconnect-attempt", {
+          roomId: session.roomId,
+          playerId: session.playerId,
+        });
+      }
     });
 
     s.on("disconnect", () => {

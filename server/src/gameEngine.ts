@@ -212,6 +212,13 @@ function buildRoundState(instance: GameInstance, room: GameRoom): RoundState {
   }
 }
 
+// ─── Build spectator round state (read-only generic view) ──
+export function getSpectatorRoundState(roomId: string, room: GameRoom): RoundState | null {
+  const instance = activeGames.get(roomId);
+  if (!instance) return null;
+  return buildRoundState(instance, room);
+}
+
 // ─── Build player-specific round state ─────────────────
 export function getPlayerRoundState(roomId: string, playerId: string, room: GameRoom): RoundState | null {
   const instance = activeGames.get(roomId);
@@ -743,6 +750,74 @@ function levenshtein(a: string, b: string): number {
   }
 
   return prev[n];
+}
+
+// ─── Finish bot players (dev mode) ─────────────────────
+export function finishBotPlayers(roomId: string, room: GameRoom): void {
+  const instance = activeGames.get(roomId);
+  if (!instance) return;
+
+  for (const player of room.players) {
+    if (!player.isBot) continue;
+    const tracker = instance.playerTrackers.get(player.id);
+    if (!tracker || tracker.finished) continue;
+
+    const puzzle = instance.puzzle;
+
+    if (puzzle.type === 'connections' || puzzle.type === 'puzzelronde') {
+      // Solve some groups randomly (1 to all)
+      const totalGroups = puzzle.groups.length;
+      const groupsToSolve = 1 + Math.floor(Math.random() * totalGroups);
+      for (let i = 0; i < groupsToSolve && tracker.solvedGroups.length < totalGroups; i++) {
+        const unsolved = Array.from({ length: totalGroups }, (_, idx) => idx)
+          .filter((idx) => !tracker.solvedGroups.includes(idx));
+        if (unsolved.length === 0) break;
+        const pick = unsolved[Math.floor(Math.random() * unsolved.length)];
+        tracker.solvedGroups.push(pick);
+        tracker.score += 100;
+        if (puzzle.type === 'puzzelronde') {
+          // Random chance of getting the answer right
+          const answerCorrect = Math.random() > 0.3;
+          tracker.answerResults.set(pick, answerCorrect);
+          if (answerCorrect) {
+            tracker.correctAnswers++;
+            tracker.score += 150;
+          }
+        }
+      }
+    } else if (puzzle.type === 'opendeur') {
+      // Find some answers per question
+      for (let q = 0; q < puzzle.questions.length; q++) {
+        const answers = puzzle.questions[q].answers;
+        const found: string[] = [];
+        for (const a of answers) {
+          if (Math.random() > 0.3) {
+            found.push(a);
+            tracker.correctAnswers++;
+            tracker.score += 50;
+          }
+        }
+        tracker.foundAnswersPerQuestion.set(q, found);
+      }
+    } else if (puzzle.type === 'lingo') {
+      // Complete some words
+      for (let w = 0; w < puzzle.words.length; w++) {
+        const guessed = Math.random() > 0.3;
+        const guessCount = guessed ? 1 + Math.floor(Math.random() * 4) : 5;
+        tracker.lingoCompletedWords.push({ guessed, guessCount });
+        if (guessed) {
+          tracker.score += 100 + (5 - guessCount) * 20;
+          tracker.correctAnswers++;
+        }
+      }
+      tracker.lingoCurrentWordIndex = puzzle.words.length;
+    }
+
+    // Add some random wrong guesses
+    tracker.wrongGuesses = Math.floor(Math.random() * 3);
+    tracker.finished = true;
+    tracker.endTime = Date.now();
+  }
 }
 
 // ─── Get player progress (for broadcasting) ───────────

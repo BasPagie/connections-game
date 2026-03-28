@@ -14,10 +14,17 @@ import {
   getSocketIdForPlayer,
   updateSettings,
   isHost,
+  addBotToRoom,
+  removeBotFromRoom,
+  disconnectPlayer,
+  scheduleDisconnectCleanup,
+  reconnectPlayer,
+  removeDisconnectedPlayer,
 } from './rooms.js';
 import {
   startRound,
   getPlayerRoundState,
+  getSpectatorRoundState,
   submitGroupGuess,
   submitAnswer,
   submitOpenDeurAnswer,
@@ -30,11 +37,14 @@ import {
   getFinalResults,
   startTimer,
   cleanupGame,
+  finishBotPlayers,
 } from './gameEngine.js';
 import { PREMADE_AVATARS } from '../../shared/types.js';
 
 type IOServer = Server<ClientToServerEvents, ServerToClientEvents>;
 type IOSocket = Socket<ClientToServerEvents, ServerToClientEvents>;
+
+const DEV_MODE = process.env.DEV_MODE === 'true';
 
 // Store round results per room for final results
 const roomRoundResults = new Map<string, RoundResult[]>();
@@ -84,6 +94,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     const result = createRoom(socket.id, safeName, avatarUrl);
     socket.join(result.room.roomId);
     socket.emit('room-created', { room: result.room, player: result.player });
+    if (DEV_MODE) socket.emit('dev-mode-status', { enabled: true });
     console.log(`[Room] Aangemaakt: ${result.room.roomId} door ${safeName}`);
   });
 
@@ -101,6 +112,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     }
     socket.join(roomId);
     socket.emit('room-joined', { room: result.room, player: result.player });
+    if (DEV_MODE) socket.emit('dev-mode-status', { enabled: true });
     socket.to(roomId).emit('player-joined', { player: result.player });
     console.log(`[Room] ${safeName} is toegetreden tot ${roomId}`);
   });
@@ -417,11 +429,103 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     }
   });
 
+  // ─── Dev: Add Bot ────────────────────────────────────
+  socket.on('dev-add-bot', () => {
+    if (!DEV_MODE) return;
+    const mapping = getSocketMapping(socket.id);
+    if (!mapping) return;
+    if (!isHost(mapping.roomId, mapping.playerId)) return;
+
+    const bot = addBotToRoom(mapping.roomId);
+    if (!bot) {
+      socket.emit('error', { message: 'Kon geen bot toevoegen.' });
+      return;
+    }
+    io.to(mapping.roomId).emit('player-joined', { player: bot });
+  });
+
+  // ─── Dev: Remove Bot ────────────────────────────────
+  socket.on('dev-remove-bot', ({ playerId }) => {
+    if (!DEV_MODE) return;
+    const mapping = getSocketMapping(socket.id);
+    if (!mapping) return;
+    if (!isHost(mapping.roomId, mapping.playerId)) return;
+
+    if (removeBotFromRoom(mapping.roomId, playerId)) {
+      io.to(mapping.roomId).emit('player-left', { playerId });
+    }
+  });
+
+  // ─── Reconnect ────────────────────────────────────────
+  socket.on('reconnect-attempt', ({ roomId, playerId }) => {
+    if (typeof roomId !== 'string' || typeof playerId !== 'string') return;
+
+    const result = reconnectPlayer(socket.id, roomId, playerId);
+    if (!result) {
+      socket.emit('reconnect-failed');
+      return;
+    }
+
+    const { room, player } = result;
+    socket.join(roomId);
+
+    // Determine current phase and gather state
+    let phase: 'lobby' | 'playing' | 'round-end' | 'finished' = 'lobby';
+    let roundState: import('../../shared/types.js').RoundState | null = null;
+    let roundResult: import('../../shared/types.js').RoundResult | null = null;
+    let finalResultsData: import('../../shared/types.js').FinalResults | null = null;
+    let progress: import('../../shared/types.js').PlayerProgress[] = [];
+
+    if (room.status === 'playing') {
+      // Check if there's an active game
+      const playerState = getPlayerRoundState(roomId, playerId, room);
+      const spectatorState = player.isHost && !room.settings.hostPlays
+        ? getSpectatorRoundState(roomId, room)
+        : null;
+      roundState = playerState ?? spectatorState ?? null;
+
+      // Check if we're between rounds (round-end)
+      const storedResults = roomRoundResults.get(roomId) ?? [];
+      if (storedResults.length > room.currentRoundIndex) {
+        // We have a result for the current round → round-end phase
+        phase = 'round-end';
+        roundResult = storedResults[storedResults.length - 1];
+      } else if (roundState) {
+        phase = 'playing';
+      } else {
+        phase = 'playing'; // maybe between rounds, client will show loading
+      }
+
+      progress = getPlayerProgress(roomId);
+    } else if (room.status === 'finished') {
+      phase = 'finished';
+      const allResults = roomRoundResults.get(roomId) ?? [];
+      finalResultsData = getFinalResults(room, allResults);
+    }
+
+    socket.emit('reconnected', {
+      room,
+      player,
+      roundState,
+      phase,
+      roundResult,
+      finalResults: finalResultsData,
+      playerProgress: progress,
+    });
+
+    if (DEV_MODE) socket.emit('dev-mode-status', { enabled: true });
+
+    // Notify others that the player is back
+    socket.to(roomId).emit('player-joined', { player });
+
+    console.log(`[Room] Speler ${player.nickname} opnieuw verbonden met ${roomId}`);
+  });
+
   // ─── Disconnect ──────────────────────────────────────
   socket.on('disconnect', () => {
     console.log(`[Socket] Verbinding verbroken: ${socket.id}`);
     socketEventTimestamps.delete(socket.id);
-    handleLeave(io, socket);
+    handleDisconnect(io, socket);
   });
 }
 
@@ -452,6 +556,52 @@ function handleLeave(io: IOServer, socket: IOSocket): void {
   console.log(`[Room] Speler ${result.playerId} has verlaten ${result.roomId}`);
 }
 
+const DISCONNECT_GRACE_MS = 30_000; // 30 seconds to reconnect
+
+function handleDisconnect(io: IOServer, socket: IOSocket): void {
+  const result = disconnectPlayer(socket.id);
+  if (!result) return;
+
+  const { roomId, playerId } = result;
+  socket.leave(roomId);
+
+  console.log(`[Room] Speler ${playerId} losgekoppeld van ${roomId}, wacht ${DISCONNECT_GRACE_MS / 1000}s op herverbinding...`);
+
+  // Notify others that this player disconnected (but don't remove yet)
+  const room = getRoom(roomId);
+  if (room) {
+    // Tell other players this player disconnected (they'll see connected: false)
+    io.to(roomId).emit('player-left', { playerId, disconnected: true });
+  }
+
+  // Schedule permanent removal after grace period
+  scheduleDisconnectCleanup(playerId, DISCONNECT_GRACE_MS, () => {
+    const currentRoom = getRoom(roomId);
+    if (!currentRoom) return;
+
+    // Player didn't reconnect in time — remove permanently
+    const removeResult = removeDisconnectedPlayer(roomId, playerId);
+    if (!removeResult) return;
+
+    if (removeResult.roomDeleted) {
+      cleanupGame(roomId);
+      roomRoundResults.delete(roomId);
+      const countdown = roomCountdowns.get(roomId);
+      if (countdown) {
+        clearInterval(countdown);
+        roomCountdowns.delete(roomId);
+      }
+    } else {
+      io.to(roomId).emit('player-left', {
+        playerId,
+        newHostId: removeResult.newHostId,
+      });
+    }
+
+    console.log(`[Room] Speler ${playerId} definitief verwijderd uit ${roomId} (timeout)`);
+  });
+}
+
 function startNewRound(io: IOServer, roomId: string): void {
   const room = getRoom(roomId);
   if (!room) return;
@@ -466,6 +616,9 @@ function startNewRound(io: IOServer, roomId: string): void {
 
   // Send personalized round state to each player
   for (const player of room.players) {
+    // Skip spectating host — handled below
+    if (player.isHost && !room.settings.hostPlays) continue;
+
     const playerState = getPlayerRoundState(roomId, player.id, room);
     if (!playerState) continue;
     const sid = getSocketIdForPlayer(roomId, player.id);
@@ -475,6 +628,24 @@ function startNewRound(io: IOServer, roomId: string): void {
         roundState: playerState,
         roundType: roundConfig.type,
       });
+    }
+  }
+
+  // Send spectator view to host if they are not playing
+  if (!room.settings.hostPlays) {
+    const host = room.players.find((p) => p.isHost);
+    if (host) {
+      const spectatorState = getSpectatorRoundState(roomId, room);
+      if (spectatorState) {
+        const sid = getSocketIdForPlayer(roomId, host.id);
+        if (sid) {
+          io.to(sid).emit('round-start', {
+            roundIndex: room.currentRoundIndex,
+            roundState: spectatorState,
+            roundType: roundConfig.type,
+          });
+        }
+      }
     }
   }
 
@@ -490,6 +661,21 @@ function startNewRound(io: IOServer, roomId: string): void {
         endCurrentRound(io, roomId);
       }
     );
+  }
+
+  // Dev mode: auto-finish bot players after a short delay
+  if (DEV_MODE && room.players.some((p) => p.isBot)) {
+    const delay = 2000 + Math.floor(Math.random() * 3000); // 2-5 seconds
+    setTimeout(() => {
+      const currentRoom = getRoom(roomId);
+      if (!currentRoom) return;
+      finishBotPlayers(roomId, currentRoom);
+      const progress = getPlayerProgress(roomId);
+      io.to(roomId).emit('player-progress', progress);
+      if (isRoundComplete(roomId)) {
+        endCurrentRound(io, roomId);
+      }
+    }, delay);
   }
 }
 

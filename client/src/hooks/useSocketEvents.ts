@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSocket } from '../context/SocketContext';
+import { saveSession, clearSession } from '../context/SocketContext';
 import { useGame } from '../context/GameContext';
 
 export function useSocketEvents() {
@@ -16,12 +17,14 @@ export function useSocketEvents() {
     socket.on('room-created', ({ room, player }) => {
       dispatch({ type: 'SET_PLAYER', player });
       dispatch({ type: 'SET_ROOM', room });
+      saveSession(room.roomId, player.id);
       navigateRef.current(`/lobby/${room.roomId}`);
     });
 
     socket.on('room-joined', ({ room, player }) => {
       dispatch({ type: 'SET_PLAYER', player });
       dispatch({ type: 'SET_ROOM', room });
+      saveSession(room.roomId, player.id);
       if (room.status === 'lobby') {
         navigateRef.current(`/lobby/${room.roomId}`);
       }
@@ -31,8 +34,8 @@ export function useSocketEvents() {
       dispatch({ type: 'PLAYER_JOINED', player });
     });
 
-    socket.on('player-left', ({ playerId, newHostId }) => {
-      dispatch({ type: 'PLAYER_LEFT', playerId, newHostId });
+    socket.on('player-left', ({ playerId, newHostId, disconnected }) => {
+      dispatch({ type: 'PLAYER_LEFT', playerId, newHostId, disconnected });
     });
 
     socket.on('settings-updated', (settings) => {
@@ -102,8 +105,39 @@ export function useSocketEvents() {
     });
 
     socket.on('room-closed', () => {
+      clearSession();
       dispatch({ type: 'RESET' });
       navigateRef.current('/');
+    });
+
+    socket.on('dev-mode-status', ({ enabled }) => {
+      dispatch({ type: 'SET_DEV_MODE', enabled });
+    });
+
+    socket.on('reconnected', ({ room, player, roundState, phase, roundResult, finalResults, playerProgress }) => {
+      dispatch({
+        type: 'RECONNECTED',
+        room,
+        player,
+        roundState,
+        phase,
+        roundResult,
+        finalResults,
+        playerProgress,
+      });
+      saveSession(room.roomId, player.id);
+      // Navigate to the right page
+      if (phase === 'finished') {
+        navigateRef.current(`/results/${room.roomId}`);
+      } else if (phase === 'lobby') {
+        navigateRef.current(`/lobby/${room.roomId}`);
+      } else {
+        navigateRef.current(`/game/${room.roomId}`);
+      }
+    });
+
+    socket.on('reconnect-failed', () => {
+      clearSession();
     });
 
     return () => {
@@ -128,6 +162,9 @@ export function useSocketEvents() {
       socket.off('error');
       socket.off('time-update');
       socket.off('room-closed');
+      socket.off('dev-mode-status');
+      socket.off('reconnected');
+      socket.off('reconnect-failed');
     };
   }, [socket, dispatch]);
 }
