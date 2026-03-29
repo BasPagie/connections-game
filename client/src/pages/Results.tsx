@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "../context/SocketContext";
+import { getSession } from "../context/SocketContext";
 import { useGame } from "../context/GameContext";
 import { useSocketEvents } from "../hooks/useSocketEvents";
 import { PREMADE_AVATARS } from "shared/types";
@@ -67,6 +68,12 @@ export default function Results() {
   }, [state.phase, roomId, navigate]);
 
   if (!state.finalResults) {
+    const session = getSession();
+    if (!session || session.roomId !== roomId) {
+      navigate("/");
+      return null;
+    }
+
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="text-center">

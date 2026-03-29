@@ -219,6 +219,7 @@ export interface ClientToServerEvents {
   'dev-add-bot': () => void;
   'dev-remove-bot': (data: { playerId: string }) => void;
   'reconnect-attempt': (data: { roomId: string; playerId: string }) => void;
+  'check-room': (data: { roomId: string }) => void;
 }
 
 export interface ServerToClientEvents {
@@ -247,6 +248,7 @@ export interface ServerToClientEvents {
   'dev-mode-status': (data: { enabled: boolean }) => void;
   'reconnected': (data: { room: GameRoom; player: Player; roundState: RoundState | null; phase: 'lobby' | 'playing' | 'round-end' | 'finished'; roundResult: RoundResult | null; finalResults: FinalResults | null; playerProgress: PlayerProgress[] }) => void;
   'reconnect-failed': () => void;
+  'room-check': (data: { exists: boolean; joinable: boolean }) => void;
 }
 
 // ─── Pre-made Avatars ──────────────────────────────────

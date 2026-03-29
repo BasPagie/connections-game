@@ -111,7 +111,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     }
     const result = joinRoom(socket.id, roomId, safeName, avatarUrl);
     if (!result) {
-      socket.emit('error', { message: 'Kamer niet gevonden, vol, of spel is al begonnen.' });
+      socket.emit('error', { message: 'Deze lobby bestaat niet of het spel is al begonnen.' });
       return;
     }
     socket.join(roomId);
@@ -508,6 +508,16 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     // Notify remaining players
     io.to(mapping.roomId).emit('player-left', { playerId });
     console.log(`[Room] Player ${playerId} kicked from ${mapping.roomId}`);
+  });
+
+  // ─── Check Room ───────────────────────────────────────
+  socket.on('check-room', ({ roomId }) => {
+    if (typeof roomId !== 'string' || roomId.length > 10) return;
+    const room = getRoom(roomId);
+    socket.emit('room-check', {
+      exists: !!room,
+      joinable: !!room && room.status === 'lobby',
+    });
   });
 
   // ─── Reconnect ────────────────────────────────────────

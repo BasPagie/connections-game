@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "../context/SocketContext";
-import { clearSession } from "../context/SocketContext";
+import { clearSession, getSession } from "../context/SocketContext";
 import { useGame } from "../context/GameContext";
 import { useSocketEvents } from "../hooks/useSocketEvents";
 import PlayerList from "../components/PlayerList";
@@ -18,6 +18,17 @@ export default function Lobby() {
   const { state } = useGame();
   const [copied, setCopied] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [waitExpired, setWaitExpired] = useState(false);
+
+  const session = getSession();
+  const hasSessionForRoom = session?.roomId === roomId;
+
+  // If we have a session, give a few seconds for reconnect to complete
+  useEffect(() => {
+    if (state.room || !hasSessionForRoom) return;
+    const timer = setTimeout(() => setWaitExpired(true), 4000);
+    return () => clearTimeout(timer);
+  }, [state.room, hasSessionForRoom]);
 
   const inviteUrl = `${window.location.origin}/join/${roomId}`;
   const isPlayerHost = state.player?.isHost ?? false;
@@ -58,11 +69,54 @@ export default function Lobby() {
   };
 
   if (!state.room) {
+    // No session at all → redirect to home immediately
+    if (!hasSessionForRoom) {
+      navigate("/");
+      return null;
+    }
+
+    // Has session but reconnect hasn't completed yet — show geen toegang after timeout
+    if (waitExpired) {
+      return (
+        <div className="h-screen flex items-center justify-center px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center max-w-sm"
+          >
+            <div className="text-6xl mb-4">🚫</div>
+            <h2 className="font-display font-black text-2xl text-gray-800 mb-2">
+              Geen toegang
+            </h2>
+            <p className="text-gray-500 font-display text-sm mb-6">
+              Je zit niet meer in deze kamer. Vraag de host om een nieuwe
+              uitnodigingslink.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => navigate(`/join/${roomId}`)}
+                className="btn-primary w-full"
+              >
+                🔗 Opnieuw deelnemen
+              </button>
+              <button
+                onClick={() => navigate("/")}
+                className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 
+                           text-gray-600 font-display font-bold text-sm transition-colors w-full"
+              >
+                ← Terug naar home
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      );
+    }
+
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin text-4xl mb-4">🎲</div>
-          <p className="text-gray-600 font-display">Laden...</p>
+          <p className="text-gray-600 font-display">Herverbinden...</p>
         </div>
       </div>
     );

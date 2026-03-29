@@ -26,7 +26,7 @@ export function clearSession() {
   } catch {}
 }
 
-function getSession(): { roomId: string; playerId: string } | null {
+export function getSession(): { roomId: string; playerId: string } | null {
   try {
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;

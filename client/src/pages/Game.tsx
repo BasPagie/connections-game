@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSocket } from "../context/SocketContext";
+import { getSession } from "../context/SocketContext";
 import { useGame } from "../context/GameContext";
 import { useSocketEvents } from "../hooks/useSocketEvents";
 import type { RoundType } from "shared/types";
@@ -234,6 +235,12 @@ export default function Game() {
   }
 
   if (!state.roundState || !state.room) {
+    const session = getSession();
+    if (!session || session.roomId !== roomId) {
+      navigate("/");
+      return null;
+    }
+
     return (
       <div className="h-screen flex items-center justify-center">
         <motion.div
