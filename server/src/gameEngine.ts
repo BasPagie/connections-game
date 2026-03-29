@@ -184,8 +184,7 @@ function buildRoundState(instance: GameInstance, room: GameRoom): RoundState {
       type: 'puzzelronde',
       words,
       solvedGroups: [],
-      pendingAnswer: false,
-      attemptsLeft,
+      totalGroups: puzzle.groups.length,
       timeRemainingMs,
     };
   } else if (puzzle.type === 'lingo') {
@@ -254,19 +253,16 @@ export function getPlayerRoundState(roomId: string, playerId: string, room: Game
   } else if (puzzle.type === 'puzzelronde') {
     const solvedGroups = tracker.solvedGroups.map((i) => ({
       words: puzzle.groups[i].words,
-      answerCorrect: tracker.answerResults.get(i) ?? null,
+      answer: puzzle.groups[i].answer,
     }));
-    const solvedWords = new Set(tracker.solvedGroups.flatMap((i) => puzzle.groups[i].words));
-    const remainingWords = shuffle(
-      puzzle.groups.flatMap((g) => g.words).filter((w) => !solvedWords.has(w))
-    );
+    // Always show all words (shuffled)
+    const allWords = shuffle(puzzle.groups.flatMap((g) => g.words));
 
     return {
       type: 'puzzelronde',
-      words: remainingWords,
+      words: allWords,
       solvedGroups,
-      pendingAnswer: tracker.pendingGroupIndex !== null,
-      attemptsLeft,
+      totalGroups: puzzle.groups.length,
       timeRemainingMs,
     };
   } else if (puzzle.type === 'lingo') {
@@ -328,14 +324,11 @@ export function submitGroupGuess(
   const instance = activeGames.get(roomId);
   if (!instance) return null;
 
-  // Open Deur and Lingo don't use group guesses
-  if (instance.puzzle.type === 'opendeur' || instance.puzzle.type === 'lingo') return null;
+  // Open Deur, Lingo, and Puzzelronde don't use group guesses
+  if (instance.puzzle.type === 'opendeur' || instance.puzzle.type === 'lingo' || instance.puzzle.type === 'puzzelronde') return null;
 
   const tracker = instance.playerTrackers.get(playerId);
   if (!tracker || tracker.finished) return null;
-
-  // For puzzelronde, if there's a pending answer, don't allow new group guess
-  if (tracker.pendingGroupIndex !== null) return null;
 
   const puzzle = instance.puzzle;
   const normalizedGuess = new Set(guessedWords.map((w) => w.trim().toLowerCase()));
@@ -353,30 +346,22 @@ export function submitGroupGuess(
       const totalGroups = puzzle.groups.length;
       let playerFinished = false;
 
-      if (puzzle.type === 'puzzelronde') {
-        // In puzzelronde, after finding a group, player must guess the connecting word
-        tracker.pendingGroupIndex = i;
-      }
-
       if (tracker.solvedGroups.length === totalGroups) {
-        if (puzzle.type === 'connections') {
-          tracker.finished = true;
-          tracker.endTime = Date.now();
-          playerFinished = true;
-          // Speed bonus
-          const timeTaken = tracker.endTime - tracker.startTime;
-          if (room.settings.timeLimitSeconds) {
-            const bonus = Math.max(0, Math.floor((room.settings.timeLimitSeconds * 1000 - timeTaken) / 1000) * 2);
-            tracker.score += bonus;
-          }
+        tracker.finished = true;
+        tracker.endTime = Date.now();
+        playerFinished = true;
+        // Speed bonus
+        const timeTaken = tracker.endTime - tracker.startTime;
+        if (room.settings.timeLimitSeconds) {
+          const bonus = Math.max(0, Math.floor((room.settings.timeLimitSeconds * 1000 - timeTaken) / 1000) * 2);
+          tracker.score += bonus;
         }
-        // puzzelronde: not finished until all connecting words are answered
       }
 
       return {
         correct: true,
         groupIndex: i,
-        group: puzzle.type === 'connections' ? puzzle.groups[i] : { words: puzzle.groups[i].words },
+        group: puzzle.groups[i],
         playerFinished,
         playerEliminated: false,
       };
@@ -420,7 +405,7 @@ export function submitGroupGuess(
 // ─── Submit connecting word answer (puzzelronde) ──────
 export interface AnswerResult {
   correct: boolean;
-  correctAnswer?: string;
+  groupWords?: string[];
   playerFinished: boolean;
 }
 
@@ -434,42 +419,47 @@ export function submitAnswer(
   if (!instance || instance.puzzle.type !== 'puzzelronde') return null;
 
   const tracker = instance.playerTrackers.get(playerId);
-  if (!tracker || tracker.finished || tracker.pendingGroupIndex === null) return null;
+  if (!tracker || tracker.finished) return null;
 
   const puzzle = instance.puzzle as PuzzelrondePuzzle;
-  const group = puzzle.groups[tracker.pendingGroupIndex];
-  const correctAnswer = group.answer;
 
-  const isCorrect = fuzzyMatch(answer, correctAnswer);
+  // Check answer against all unsolved groups
+  for (let i = 0; i < puzzle.groups.length; i++) {
+    if (tracker.solvedGroups.includes(i)) continue;
 
-  if (isCorrect) {
-    tracker.correctAnswers++;
-    tracker.score += 150;
-  }
+    const group = puzzle.groups[i];
+    if (fuzzyMatch(answer, group.answer)) {
+      tracker.solvedGroups.push(i);
+      tracker.correctAnswers++;
+      tracker.score += 150;
 
-  tracker.answerResults.set(tracker.pendingGroupIndex, isCorrect);
-  tracker.pendingGroupIndex = null;
+      const allGroupsSolved = tracker.solvedGroups.length === puzzle.groups.length;
+      let playerFinished = false;
 
-  // Check if all groups solved and all answers given
-  const allGroupsSolved = tracker.solvedGroups.length === puzzle.groups.length;
-  let playerFinished = false;
+      if (allGroupsSolved) {
+        tracker.finished = true;
+        tracker.endTime = Date.now();
+        playerFinished = true;
+        // Speed bonus
+        const timeTaken = tracker.endTime - tracker.startTime;
+        if (room.settings.timeLimitSeconds) {
+          const bonus = Math.max(0, Math.floor((room.settings.timeLimitSeconds * 1000 - timeTaken) / 1000) * 2);
+          tracker.score += bonus;
+        }
+      }
 
-  if (allGroupsSolved) {
-    tracker.finished = true;
-    tracker.endTime = Date.now();
-    playerFinished = true;
-    // Speed bonus
-    const timeTaken = tracker.endTime - tracker.startTime;
-    if (room.settings.timeLimitSeconds) {
-      const bonus = Math.max(0, Math.floor((room.settings.timeLimitSeconds * 1000 - timeTaken) / 1000) * 2);
-      tracker.score += bonus;
+      return {
+        correct: true,
+        groupWords: group.words,
+        playerFinished,
+      };
     }
   }
 
+  // Wrong answer
   return {
-    correct: isCorrect,
-    correctAnswer: isCorrect ? undefined : correctAnswer,
-    playerFinished,
+    correct: false,
+    playerFinished: false,
   };
 }
 
@@ -768,7 +758,7 @@ export function finishBotPlayers(roomId: string, room: GameRoom): void {
 
     const puzzle = instance.puzzle;
 
-    if (puzzle.type === 'connections' || puzzle.type === 'puzzelronde') {
+    if (puzzle.type === 'connections') {
       // Solve some groups randomly (1 to all)
       const totalGroups = puzzle.groups.length;
       const groupsToSolve = 1 + Math.floor(Math.random() * totalGroups);
@@ -779,15 +769,19 @@ export function finishBotPlayers(roomId: string, room: GameRoom): void {
         const pick = unsolved[Math.floor(Math.random() * unsolved.length)];
         tracker.solvedGroups.push(pick);
         tracker.score += 100;
-        if (puzzle.type === 'puzzelronde') {
-          // Random chance of getting the answer right
-          const answerCorrect = Math.random() > 0.3;
-          tracker.answerResults.set(pick, answerCorrect);
-          if (answerCorrect) {
-            tracker.correctAnswers++;
-            tracker.score += 150;
-          }
-        }
+      }
+    } else if (puzzle.type === 'puzzelronde') {
+      // Answer some connecting words randomly (1 to all)
+      const totalGroups = puzzle.groups.length;
+      const groupsToSolve = 1 + Math.floor(Math.random() * totalGroups);
+      for (let i = 0; i < groupsToSolve && tracker.solvedGroups.length < totalGroups; i++) {
+        const unsolved = Array.from({ length: totalGroups }, (_, idx) => idx)
+          .filter((idx) => !tracker.solvedGroups.includes(idx));
+        if (unsolved.length === 0) break;
+        const pick = unsolved[Math.floor(Math.random() * unsolved.length)];
+        tracker.solvedGroups.push(pick);
+        tracker.correctAnswers++;
+        tracker.score += 150;
       }
     } else if (puzzle.type === 'opendeur') {
       // Find some answers per question

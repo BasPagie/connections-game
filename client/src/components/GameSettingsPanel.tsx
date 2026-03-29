@@ -1,5 +1,10 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useRef } from "react";
+import {
+  motion,
+  AnimatePresence,
+  Reorder,
+  useDragControls,
+} from "framer-motion";
 import type {
   GameSettings,
   RoundConfig,
@@ -157,6 +162,11 @@ export default function GameSettingsPanel({
 }
 
 // ─── Host Editor ───────────────────────────────────────
+interface DraggableRound {
+  id: string;
+  config: RoundConfig;
+}
+
 function HostSettingsEditor({
   settings,
   onChange,
@@ -164,42 +174,74 @@ function HostSettingsEditor({
   settings: GameSettings;
   onChange: (s: GameSettings) => void;
 }) {
+  const nextId = useRef(0);
+  const [items, setItems] = useState<DraggableRound[]>(() =>
+    settings.rounds.map((config) => ({
+      id: String(nextId.current++),
+      config,
+    })),
+  );
   const [editingRound, setEditingRound] = useState<number | null>(null);
+  const itemsRef = useRef(items);
+  itemsRef.current = items;
 
-  const updateRounds = (rounds: RoundConfig[]) => {
-    onChange({ ...settings, rounds });
+  const emitChange = (overrides: Partial<GameSettings>) => {
+    const currentRounds = itemsRef.current.map((i) => i.config);
+    onChange({ ...settings, ...overrides, rounds: currentRounds });
+  };
+
+  const pushItems = (newItems: DraggableRound[]) => {
+    setItems(newItems);
+    itemsRef.current = newItems;
+    onChange({ ...settings, rounds: newItems.map((i) => i.config) });
+  };
+
+  const handleReorder = (newItems: DraggableRound[]) => {
+    setItems(newItems);
+    itemsRef.current = newItems;
+    setEditingRound(null);
+  };
+
+  const handleDragEnd = () => {
+    onChange({
+      ...settings,
+      rounds: itemsRef.current.map((i) => i.config),
+    });
   };
 
   const addRound = () => {
-    if (settings.rounds.length >= 5) return;
-    const newRounds = [
-      ...settings.rounds,
-      {
+    if (items.length >= 5) return;
+    const newItem: DraggableRound = {
+      id: String(nextId.current++),
+      config: {
         type: "connections" as RoundType,
         difficulty: "medium" as PuzzleDifficulty,
       },
-    ];
-    updateRounds(newRounds);
-    setEditingRound(newRounds.length - 1);
+    };
+    const newItems = [...items, newItem];
+    pushItems(newItems);
+    setEditingRound(newItems.length - 1);
   };
 
   const removeRound = (index: number) => {
-    if (settings.rounds.length <= 1) return;
-    const newRounds = settings.rounds.filter((_, i) => i !== index);
-    updateRounds(newRounds);
+    if (items.length <= 1) return;
+    const newItems = items.filter((_, i) => i !== index);
+    pushItems(newItems);
     setEditingRound(null);
   };
 
   const setRoundType = (index: number, type: RoundType) => {
-    const newRounds = [...settings.rounds];
-    newRounds[index] = { ...newRounds[index], type };
-    updateRounds(newRounds);
+    const newItems = items.map((item, i) =>
+      i === index ? { ...item, config: { ...item.config, type } } : item,
+    );
+    pushItems(newItems);
   };
 
   const setRoundDifficulty = (index: number, difficulty: PuzzleDifficulty) => {
-    const newRounds = [...settings.rounds];
-    newRounds[index] = { ...newRounds[index], difficulty };
-    updateRounds(newRounds);
+    const newItems = items.map((item, i) =>
+      i === index ? { ...item, config: { ...item.config, difficulty } } : item,
+    );
+    pushItems(newItems);
   };
 
   return (
@@ -210,152 +252,41 @@ function HostSettingsEditor({
 
       {/* ── SECTION: Rounds ─────────────────────────── */}
       <Section label="Rondes">
-        <div className="space-y-2">
-          {settings.rounds.map((round, i) => {
-            const meta = getRoundMeta(round.type);
-            const diff = getDiffMeta(round.difficulty);
-            const isEditing = editingRound === i;
+        <Reorder.Group
+          as="div"
+          axis="y"
+          values={items}
+          onReorder={handleReorder}
+          className="space-y-2"
+        >
+          {items.map((item, i) => (
+            <RoundCard
+              key={item.id}
+              item={item}
+              index={i}
+              total={items.length}
+              isEditing={editingRound === i}
+              onToggleEdit={() =>
+                setEditingRound(editingRound === i ? null : i)
+              }
+              onRemove={() => removeRound(i)}
+              onSetType={(type) => setRoundType(i, type)}
+              onSetDifficulty={(diff) => setRoundDifficulty(i, diff)}
+              onDragEnd={handleDragEnd}
+            />
+          ))}
+        </Reorder.Group>
 
-            return (
-              <div key={i}>
-                {/* Collapsed round card */}
-                <div
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => setEditingRound(isEditing ? null : i)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      setEditingRound(isEditing ? null : i);
-                    }
-                  }}
-                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer
-                    ${isEditing ? "bg-gray-100 ring-2 ring-brand-300" : "bg-gray-50 hover:bg-gray-100"}`}
-                >
-                  <span className="text-lg">{meta.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <span className="font-display font-bold text-sm text-gray-700">
-                      {meta.label}
-                    </span>
-                    <span className="mx-2 text-gray-300">·</span>
-                    <span className="inline-flex items-center gap-1 text-xs text-gray-500">
-                      <span
-                        className={`w-1.5 h-1.5 rounded-full ${diff.dot}`}
-                      />
-                      {diff.label}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-400 font-display font-bold">
-                    {i + 1}/{settings.rounds.length}
-                  </span>
-                  {settings.rounds.length > 1 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        removeRound(i);
-                      }}
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 
-                                 hover:bg-red-50 hover:text-red-400 transition-all"
-                      title="Ronde verwijderen"
-                    >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2}
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
-                  )}
-                  <svg
-                    className={`w-4 h-4 text-gray-400 transition-transform ${isEditing ? "rotate-180" : ""}`}
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth={2}
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M19 9l-7 7-7-7"
-                    />
-                  </svg>
-                </div>
-
-                {/* Expanded editor */}
-                <AnimatePresence>
-                  {isEditing && (
-                    <motion.div
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.2 }}
-                      className="overflow-hidden"
-                    >
-                      <div className="pt-2 pb-1 px-1 space-y-3">
-                        {/* Type selector */}
-                        <div className="flex gap-1.5">
-                          {ROUND_TYPES.map((rt) => (
-                            <button
-                              key={rt.type}
-                              onClick={() => setRoundType(i, rt.type)}
-                              className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all
-                                ${
-                                  round.type === rt.type
-                                    ? `${rt.activeBg} text-white shadow-md`
-                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                }`}
-                            >
-                              {rt.icon} {rt.label}
-                            </button>
-                          ))}
-                        </div>
-
-                        {/* Difficulty selector */}
-                        <div className="flex gap-1.5">
-                          {DIFFICULTIES.map((d) => (
-                            <button
-                              key={d.value}
-                              onClick={() => setRoundDifficulty(i, d.value)}
-                              className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5
-                                ${
-                                  round.difficulty === d.value
-                                    ? "bg-gray-800 text-white shadow-md"
-                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                }`}
-                            >
-                              <span
-                                className={`w-2 h-2 rounded-full ${d.dot}`}
-                              />
-                              {d.label}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            );
-          })}
-
-          {/* Add round */}
-          {settings.rounds.length < 5 && (
-            <button
-              onClick={addRound}
-              className="w-full py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm font-display 
-                         font-bold text-gray-400 hover:border-brand-300 hover:text-brand-500 transition-all"
-            >
-              + Ronde toevoegen
-            </button>
-          )}
-        </div>
+        {/* Add round */}
+        {items.length < 5 && (
+          <button
+            onClick={addRound}
+            className="w-full mt-2 py-2.5 rounded-xl border-2 border-dashed border-gray-200 text-sm font-display 
+                       font-bold text-gray-400 hover:border-brand-300 hover:text-brand-500 transition-all"
+          >
+            + Ronde toevoegen
+          </button>
+        )}
       </Section>
 
       {/* ── SECTION: Lives & Time ───────────────────── */}
@@ -365,8 +296,7 @@ function HostSettingsEditor({
           <div className="flex gap-2">
             <button
               onClick={() =>
-                onChange({
-                  ...settings,
+                emitChange({
                   attemptsMode: "limited",
                   maxAttempts: settings.maxAttempts || 4,
                 })
@@ -381,9 +311,7 @@ function HostSettingsEditor({
               ❤️ Levens
             </button>
             <button
-              onClick={() =>
-                onChange({ ...settings, attemptsMode: "unlimited" })
-              }
+              onClick={() => emitChange({ attemptsMode: "unlimited" })}
               className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all
                 ${
                   settings.attemptsMode === "unlimited"
@@ -407,8 +335,7 @@ function HostSettingsEditor({
                 <div className="flex items-center justify-center gap-4 py-2">
                   <button
                     onClick={() =>
-                      onChange({
-                        ...settings,
+                      emitChange({
                         maxAttempts: Math.max(1, settings.maxAttempts - 1),
                       })
                     }
@@ -426,8 +353,7 @@ function HostSettingsEditor({
                   </div>
                   <button
                     onClick={() =>
-                      onChange({
-                        ...settings,
+                      emitChange({
                         maxAttempts: Math.min(10, settings.maxAttempts + 1),
                       })
                     }
@@ -455,9 +381,7 @@ function HostSettingsEditor({
             {TIME_OPTIONS.map((opt) => (
               <button
                 key={String(opt.value)}
-                onClick={() =>
-                  onChange({ ...settings, timeLimitSeconds: opt.value })
-                }
+                onClick={() => emitChange({ timeLimitSeconds: opt.value })}
                 className={`py-1.5 px-3 rounded-lg text-xs font-bold transition-all
                   ${
                     settings.timeLimitSeconds === opt.value
@@ -477,7 +401,7 @@ function HostSettingsEditor({
       <Section label="Host">
         <div className="flex gap-2">
           <button
-            onClick={() => onChange({ ...settings, hostPlays: true })}
+            onClick={() => emitChange({ hostPlays: true })}
             className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all
               ${
                 settings.hostPlays
@@ -488,7 +412,7 @@ function HostSettingsEditor({
             🎮 Meespelen
           </button>
           <button
-            onClick={() => onChange({ ...settings, hostPlays: false })}
+            onClick={() => emitChange({ hostPlays: false })}
             className={`flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all
               ${
                 !settings.hostPlays
@@ -501,6 +425,180 @@ function HostSettingsEditor({
         </div>
       </Section>
     </div>
+  );
+}
+
+// ─── Draggable Round Card ──────────────────────────────
+function RoundCard({
+  item,
+  index,
+  total,
+  isEditing,
+  onToggleEdit,
+  onRemove,
+  onSetType,
+  onSetDifficulty,
+  onDragEnd,
+}: {
+  item: DraggableRound;
+  index: number;
+  total: number;
+  isEditing: boolean;
+  onToggleEdit: () => void;
+  onRemove: () => void;
+  onSetType: (type: RoundType) => void;
+  onSetDifficulty: (d: PuzzleDifficulty) => void;
+  onDragEnd: () => void;
+}) {
+  const controls = useDragControls();
+  const meta = getRoundMeta(item.config.type);
+  const diff = getDiffMeta(item.config.difficulty);
+
+  return (
+    <Reorder.Item
+      as="div"
+      value={item}
+      dragListener={false}
+      dragControls={controls}
+      onDragEnd={onDragEnd}
+      className="list-none"
+    >
+      {/* Collapsed round card */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={onToggleEdit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onToggleEdit();
+          }
+        }}
+        className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-left transition-all cursor-pointer
+          ${isEditing ? "bg-gray-100 ring-2 ring-brand-300" : "bg-gray-50 hover:bg-gray-100"}`}
+      >
+        {/* Drag handle */}
+        <div
+          onPointerDown={(e) => controls.start(e)}
+          onClick={(e) => e.stopPropagation()}
+          className="cursor-grab active:cursor-grabbing touch-none select-none p-0.5 -ml-1 text-gray-300 hover:text-gray-400 transition-colors"
+        >
+          <svg className="w-4 h-4" viewBox="0 0 16 16" fill="currentColor">
+            <circle cx="5" cy="3" r="1.5" />
+            <circle cx="11" cy="3" r="1.5" />
+            <circle cx="5" cy="8" r="1.5" />
+            <circle cx="11" cy="8" r="1.5" />
+            <circle cx="5" cy="13" r="1.5" />
+            <circle cx="11" cy="13" r="1.5" />
+          </svg>
+        </div>
+
+        <span className="text-lg">{meta.icon}</span>
+        <div className="flex-1 min-w-0">
+          <span className="font-display font-bold text-sm text-gray-700">
+            {meta.label}
+          </span>
+          <span className="mx-2 text-gray-300">·</span>
+          <span className="inline-flex items-center gap-1 text-xs text-gray-500">
+            <span className={`w-1.5 h-1.5 rounded-full ${diff.dot}`} />
+            {diff.label}
+          </span>
+        </div>
+        <span className="text-xs text-gray-400 font-display font-bold">
+          {index + 1}/{total}
+        </span>
+        {total > 1 && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove();
+            }}
+            className="w-6 h-6 rounded-full flex items-center justify-center text-gray-300 
+                       hover:bg-red-50 hover:text-red-400 transition-all"
+            title="Ronde verwijderen"
+          >
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        )}
+        <svg
+          className={`w-4 h-4 text-gray-400 transition-transform ${isEditing ? "rotate-180" : ""}`}
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2}
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M19 9l-7 7-7-7"
+          />
+        </svg>
+      </div>
+
+      {/* Expanded editor */}
+      <AnimatePresence>
+        {isEditing && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="pt-2 pb-1 px-1 space-y-3">
+              {/* Type selector */}
+              <div className="flex gap-1.5">
+                {ROUND_TYPES.map((rt) => (
+                  <button
+                    key={rt.type}
+                    onClick={() => onSetType(rt.type)}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all
+                      ${
+                        item.config.type === rt.type
+                          ? `${rt.activeBg} text-white shadow-md`
+                          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                      }`}
+                  >
+                    {rt.icon} {rt.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Difficulty selector */}
+              <div className="flex gap-1.5">
+                {DIFFICULTIES.map((d) => (
+                  <button
+                    key={d.value}
+                    onClick={() => onSetDifficulty(d.value)}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center justify-center gap-1.5
+                      ${
+                        item.config.difficulty === d.value
+                          ? "bg-gray-800 text-white shadow-md"
+                          : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                      }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${d.dot}`} />
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Reorder.Item>
   );
 }
 

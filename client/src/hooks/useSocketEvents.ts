@@ -62,8 +62,8 @@ export function useSocketEvents() {
       dispatch({ type: 'UPDATE_ROUND_STATE', roundState, hintWords });
     });
 
-    socket.on('answer-result', ({ correct, correctAnswer, roundState }) => {
-      dispatch({ type: 'UPDATE_ROUND_STATE', roundState, answerResult: { correct, correctAnswer } });
+    socket.on('answer-result', ({ correct, roundState }) => {
+      dispatch({ type: 'UPDATE_ROUND_STATE', roundState, answerResult: { correct } });
     });
 
     socket.on('opendeur-result', ({ correct, matchedAnswer, roundState }) => {

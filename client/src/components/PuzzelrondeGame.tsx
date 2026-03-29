@@ -1,44 +1,57 @@
-import { useState, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { PuzzelrondeRoundState } from "shared/types";
 
+const GROUP_COLORS = [
+  {
+    bg: "bg-purple-100",
+    border: "border-purple-400",
+    text: "text-purple-700",
+    badge: "bg-purple-500",
+  },
+  {
+    bg: "bg-blue-100",
+    border: "border-blue-400",
+    text: "text-blue-700",
+    badge: "bg-blue-500",
+  },
+  {
+    bg: "bg-amber-100",
+    border: "border-amber-400",
+    text: "text-amber-700",
+    badge: "bg-amber-500",
+  },
+  {
+    bg: "bg-green-100",
+    border: "border-green-400",
+    text: "text-green-700",
+    badge: "bg-green-500",
+  },
+];
+
 interface PuzzelrondeGameProps {
   roundState: PuzzelrondeRoundState;
-  onSubmitGroup: (words: string[]) => void;
   onSubmitAnswer: (answer: string) => void;
-  maxAttempts?: number;
-  lastAnswerResult?: { correct: boolean; correctAnswer?: string } | null;
-  hintWords?: string[];
+  lastAnswerResult?: { correct: boolean } | null;
 }
 
 export default function PuzzelrondeGame({
   roundState,
-  onSubmitGroup,
   onSubmitAnswer,
-  maxAttempts = 4,
   lastAnswerResult = null,
-  hintWords = [],
 }: PuzzelrondeGameProps) {
-  const [selected, setSelected] = useState<string[]>([]);
   const [answer, setAnswer] = useState("");
 
-  const handleTileClick = useCallback(
-    (word: string) => {
-      if (roundState.pendingAnswer) return; // Can't select while waiting for answer
-      setSelected((prev) => {
-        if (prev.includes(word)) return prev.filter((w) => w !== word);
-        if (prev.length >= 4) return prev;
-        return [...prev, word];
-      });
-    },
-    [roundState.pendingAnswer],
-  );
+  // Build a map: word → color index (for solved groups)
+  const solvedWordMap = useMemo(() => {
+    const map = new Map<string, number>();
+    roundState.solvedGroups.forEach((group, colorIdx) => {
+      group.words.forEach((w) => map.set(w.toLowerCase(), colorIdx));
+    });
+    return map;
+  }, [roundState.solvedGroups]);
 
-  const handleSubmitGroup = () => {
-    if (selected.length !== 4) return;
-    onSubmitGroup(selected);
-    setTimeout(() => setSelected([]), 600);
-  };
+  const lastWrong = lastAnswerResult?.correct === false;
 
   const handleSubmitAnswer = () => {
     if (!answer.trim()) return;
@@ -46,169 +59,138 @@ export default function PuzzelrondeGame({
     setAnswer("");
   };
 
+  const allSolved = roundState.solvedGroups.length >= roundState.totalGroups;
+
   return (
     <div className="w-full max-w-3xl mx-auto">
       {/* Instruction */}
       <div className="text-center mb-4">
         <p className="text-sm text-gray-500 font-display">
-          {roundState.pendingAnswer
-            ? "💡 Typ het woord dat de 4 geselecteerde woorden verbindt!"
-            : "🧩 Selecteer 4 woorden die bij elkaar horen, en raad het verbindende woord!"}
+          🧩 Welk woord verbindt steeds 4 woorden? Typ het verbindende woord!
+        </p>
+        <p className="text-xs text-gray-400 font-display mt-1">
+          {roundState.solvedGroups.length}/{roundState.totalGroups} groepen
+          gevonden
         </p>
       </div>
 
-      {/* Solved groups */}
+      {/* Solved groups (answers found) */}
       <AnimatePresence>
-        {roundState.solvedGroups.map((group, i) => (
-          <motion.div
-            key={i}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto", marginBottom: 8 }}
-            className={`rounded-2xl p-4 text-center border-2
-              ${
-                group.answerCorrect === true
-                  ? "bg-green-100 border-green-400"
-                  : group.answerCorrect === false
-                    ? "bg-orange-100 border-orange-400"
-                    : "bg-purple-100 border-purple-300"
-              }`}
-          >
-            <p className="font-display font-medium text-sm text-gray-700">
-              {group.words.join(", ")}
-            </p>
-            {group.answerCorrect !== null && (
-              <p
-                className={`font-display font-bold text-xs mt-1
-                ${group.answerCorrect ? "text-green-600" : "text-orange-600"}`}
+        {roundState.solvedGroups.map((group, i) => {
+          const color = GROUP_COLORS[i % GROUP_COLORS.length];
+          return (
+            <motion.div
+              key={group.answer}
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto", marginBottom: 8 }}
+              className={`rounded-2xl p-3 sm:p-4 text-center border-2 ${color.bg} ${color.border}`}
+            >
+              <span
+                className={`inline-block px-3 py-0.5 rounded-full text-white text-xs font-bold mb-1.5 ${color.badge}`}
               >
-                {group.answerCorrect ? "✓ Goed geraden!" : "✗ Helaas, verkeerd"}
+                {group.answer}
+              </span>
+              <p className={`font-display font-medium text-sm ${color.text}`}>
+                {group.words.join(" · ")}
               </p>
-            )}
-          </motion.div>
-        ))}
+            </motion.div>
+          );
+        })}
       </AnimatePresence>
 
-      {/* Answer input (when pending) */}
-      {roundState.pendingAnswer && (
+      {/* Word grid (4×4, always visible) */}
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2.5 mb-5">
+        {roundState.words.map((word) => {
+          const colorIdx = solvedWordMap.get(word.toLowerCase());
+          const isSolved = colorIdx !== undefined;
+          const color = isSolved
+            ? GROUP_COLORS[colorIdx % GROUP_COLORS.length]
+            : null;
+
+          return (
+            <motion.div
+              key={word}
+              layout
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={`relative flex items-center justify-center rounded-xl px-1.5 py-3 sm:py-4 text-center
+                font-display font-bold text-xs sm:text-sm select-none transition-all duration-300
+                ${
+                  isSolved
+                    ? `${color!.bg} ${color!.text} border-2 ${color!.border} opacity-70`
+                    : "bg-gray-100 text-gray-700 border-2 border-gray-200"
+                }`}
+            >
+              {word}
+            </motion.div>
+          );
+        })}
+      </div>
+
+      {/* Answer input */}
+      {!allSolved && (
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-6 bg-purple-50 rounded-2xl p-5 border-2 border-purple-200"
+          className="bg-purple-50 rounded-2xl p-4 sm:p-5 border-2 border-purple-200"
         >
-          <p className="font-display font-bold text-purple-800 mb-3">
-            🤔 Wat is het verbindende woord?
-          </p>
           <div className="flex gap-2">
             <input
               type="text"
               value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
-              placeholder="Typ je antwoord..."
+              onChange={(e) => {
+                setAnswer(e.target.value);
+              }}
+              placeholder="Typ het verbindende woord..."
               maxLength={50}
-              className="flex-1 px-4 py-3 rounded-xl border-2 border-purple-200 focus:border-purple-400
-                         focus:ring-2 focus:ring-purple-200 outline-none font-display text-lg"
-              onKeyDown={(e) => e.key === "Enter" && handleSubmitAnswer()}
+              className={`flex-1 px-4 py-3 rounded-xl border-2 outline-none font-display text-lg transition-all
+                ${
+                  lastWrong
+                    ? "border-red-300 focus:border-red-400 focus:ring-2 focus:ring-red-200"
+                    : "border-purple-200 focus:border-purple-400 focus:ring-2 focus:ring-purple-200"
+                }`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSubmitAnswer();
+                }
+              }}
             />
             <button
               onClick={handleSubmitAnswer}
               disabled={!answer.trim()}
-              className="px-6 py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white
+              className="px-5 sm:px-6 py-3 rounded-xl bg-purple-500 hover:bg-purple-600 text-white
                          font-display font-bold shadow-md transition-all
                          disabled:opacity-30 active:scale-95"
             >
               Antwoord
             </button>
           </div>
+          <AnimatePresence>
+            {lastWrong && (
+              <motion.p
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="text-sm text-red-500 font-display font-medium mt-2 text-center"
+              >
+                Helaas, dat is niet juist!
+              </motion.p>
+            )}
+          </AnimatePresence>
         </motion.div>
       )}
 
-      {/* Hint message */}
-      {hintWords.length > 0 && !roundState.pendingAnswer && (
+      {/* All solved */}
+      {allSolved && (
         <motion.div
-          initial={{ opacity: 0, y: -5 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-3 px-4 py-2 bg-amber-50 border border-amber-200 rounded-xl text-center"
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center py-4"
         >
-          <p className="text-sm text-amber-700 font-display font-medium">
-            💡 Bijna! De gemarkeerde woorden horen bij elkaar — je mist er nog{" "}
-            {4 - hintWords.length}!
+          <p className="font-display font-bold text-lg text-green-600">
+            ✅ Alle groepen gevonden!
           </p>
         </motion.div>
-      )}
-
-      {/* Word grid (3x4) */}
-      {!roundState.pendingAnswer && roundState.words.length > 0 && (
-        <div className="grid grid-cols-4 gap-1.5 sm:gap-3 mb-4">
-          <AnimatePresence>
-            {roundState.words.map((word) => {
-              const isSelected = selected.includes(word);
-              const isHinted = hintWords
-                .map((w) => w.toLowerCase())
-                .includes(word.toLowerCase());
-              return (
-                <motion.button
-                  key={word}
-                  layout
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.5 }}
-                  onClick={() => handleTileClick(word)}
-                  className={
-                    isSelected
-                      ? "word-tile-selected"
-                      : isHinted
-                        ? "word-tile-hinted"
-                        : "word-tile-default"
-                  }
-                >
-                  {word}
-                  {isHinted && !isSelected && (
-                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-amber-400 rounded-full border border-white" />
-                  )}
-                </motion.button>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* Controls (only when not in answer mode) */}
-      {!roundState.pendingAnswer && roundState.words.length > 0 && (
-        <div className="flex items-center justify-between gap-2 sm:gap-3">
-          {roundState.attemptsLeft !== null && (
-            <div className="flex gap-0.5 sm:gap-1">
-              {Array.from({ length: maxAttempts }).map((_, i) => (
-                <span
-                  key={i}
-                  className={`text-base sm:text-xl transition-all duration-300
-                    ${i < (roundState.attemptsLeft ?? 0) ? "opacity-100" : "opacity-20 grayscale"}`}
-                >
-                  ❤️
-                </span>
-              ))}
-            </div>
-          )}
-
-          <div className="flex gap-1.5 sm:gap-2 ml-auto">
-            <button
-              onClick={() => setSelected([])}
-              disabled={selected.length === 0}
-              className="px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600
-                         font-display font-bold text-xs sm:text-sm transition-all disabled:opacity-30"
-            >
-              Wissen
-            </button>
-            <button
-              onClick={handleSubmitGroup}
-              disabled={selected.length !== 4}
-              className="px-4 sm:px-6 py-2 sm:py-2.5 rounded-xl bg-purple-500 hover:bg-purple-600 text-white
-                         font-display font-bold text-xs sm:text-sm shadow-md transition-all
-                         disabled:opacity-30 active:scale-95"
-            >
-              Controleer
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );

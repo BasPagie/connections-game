@@ -366,11 +366,8 @@ export default function Game() {
                 ) : state.roundState.type === "puzzelronde" ? (
                   <PuzzelrondeGame
                     roundState={state.roundState as PuzzelrondeRoundState}
-                    onSubmitGroup={handleSubmitGroup}
                     onSubmitAnswer={handleSubmitAnswer}
-                    maxAttempts={state.room.settings.maxAttempts}
                     lastAnswerResult={state.lastAnswerResult}
-                    hintWords={state.hintWords}
                   />
                 ) : state.roundState.type === "lingo" ? (
                   <LingoGame

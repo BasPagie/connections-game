@@ -21,7 +21,7 @@ export interface GameState {
   room: GameRoom | null;
   roundState: RoundState | null;
   hintWords: string[];
-  lastAnswerResult: { correct: boolean; correctAnswer?: string } | null;
+  lastAnswerResult: { correct: boolean } | null;
   playerProgress: PlayerProgress[];
   roundResults: RoundResult[];
   currentRoundResult: RoundResult | null;

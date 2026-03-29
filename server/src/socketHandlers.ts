@@ -282,7 +282,7 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
 
     socket.emit('answer-result', {
       correct: result.correct,
-      correctAnswer: result.correctAnswer,
+      groupWords: result.groupWords,
       roundState,
     });
 

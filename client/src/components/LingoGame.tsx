@@ -43,8 +43,10 @@ export default function LingoGame({
 
   // When roundState changes, decide whether to buffer or apply immediately
   useEffect(() => {
-    const wordChanged = roundState.currentWordIndex !== displayState.currentWordIndex;
-    const newGuess = roundState.guesses.length > displayState.guesses.length &&
+    const wordChanged =
+      roundState.currentWordIndex !== displayState.currentWordIndex;
+    const newGuess =
+      roundState.guesses.length > displayState.guesses.length &&
       roundState.currentWordIndex === displayState.currentWordIndex;
 
     if (newGuess) {
@@ -109,7 +111,11 @@ export default function LingoGame({
         const fb = guess.feedback[i];
         const existing = map.get(letter);
         // Priority: correct > present > absent
-        if (!existing || fb === "correct" || (fb === "present" && existing === "absent")) {
+        if (
+          !existing ||
+          fb === "correct" ||
+          (fb === "present" && existing === "absent")
+        ) {
           map.set(letter, fb);
         }
       }
@@ -186,7 +192,10 @@ export default function LingoGame({
   const guesses = displayState.guesses;
 
   // Build grid rows
-  const rows: { type: "guess"; guess: LingoGuess; rowIdx: number }[] | { type: "current" }[] | { type: "empty" }[] = [];
+  const rows:
+    | { type: "guess"; guess: LingoGuess; rowIdx: number }[]
+    | { type: "current" }[]
+    | { type: "empty" }[] = [];
   const gridRows: JSX.Element[] = [];
 
   return (
@@ -198,7 +207,8 @@ export default function LingoGame({
         className="flex items-center gap-2"
       >
         <span className="text-sm font-display font-bold text-gray-500">
-          Woord {displayState.currentWordIndex + 1} van {displayState.totalWords}
+          Woord {displayState.currentWordIndex + 1} van{" "}
+          {displayState.totalWords}
         </span>
         <div className="flex gap-1 ml-2">
           {displayState.completedWords.map((w, i) => (
@@ -207,10 +217,17 @@ export default function LingoGame({
               className={`w-3 h-3 rounded-full ${
                 w.guessed ? "bg-green-500" : "bg-red-400"
               }`}
-              title={w.guessed ? `Woord ${i + 1}: geraden in ${w.guessCount}` : `Woord ${i + 1}: niet geraden`}
+              title={
+                w.guessed
+                  ? `Woord ${i + 1}: geraden in ${w.guessCount}`
+                  : `Woord ${i + 1}: niet geraden`
+              }
             />
           ))}
-          {Array.from({ length: displayState.totalWords - displayState.completedWords.length }).map((_, i) => (
+          {Array.from({
+            length:
+              displayState.totalWords - displayState.completedWords.length,
+          }).map((_, i) => (
             <div
               key={`remaining-${i}`}
               className={`w-3 h-3 rounded-full ${
@@ -220,15 +237,6 @@ export default function LingoGame({
           ))}
         </div>
       </motion.div>
-
-      {/* Attempts left */}
-      {displayState.attemptsLeft !== null && (
-        <div className="flex items-center gap-1 text-sm">
-          {Array.from({ length: displayState.attemptsLeft }).map((_, i) => (
-            <span key={i} className="text-red-500">❤️</span>
-          ))}
-        </div>
-      )}
 
       {/* Letter Grid (5 rows × 5 cols) */}
       <div className="flex flex-col gap-1.5">
@@ -242,71 +250,73 @@ export default function LingoGame({
               key={rowIdx}
               className="flex gap-1.5"
               animate={
-                shaking && isCurrentRow
-                  ? { x: [-8, 8, -6, 6, -3, 3, 0] }
-                  : {}
+                shaking && isCurrentRow ? { x: [-8, 8, -6, 6, -3, 3, 0] } : {}
               }
               transition={{ duration: 0.4 }}
             >
-              {Array.from({ length: displayState.wordLength }).map((_, colIdx) => {
-                if (isGuessRow) {
-                  // Completed guess — show feedback
-                  const guess = guesses[rowIdx];
-                  const letter = guess.word[colIdx];
-                  const fb = guess.feedback[colIdx];
-                  return (
-                    <motion.div
-                      key={colIdx}
-                      initial={isRevealing ? { rotateX: 0 } : false}
-                      animate={isRevealing ? { rotateX: [0, 90, 0] } : {}}
-                      transition={{
-                        duration: 0.5,
-                        delay: colIdx * 0.15,
-                      }}
-                      className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center 
+              {Array.from({ length: displayState.wordLength }).map(
+                (_, colIdx) => {
+                  if (isGuessRow) {
+                    // Completed guess — show feedback
+                    const guess = guesses[rowIdx];
+                    const letter = guess.word[colIdx];
+                    const fb = guess.feedback[colIdx];
+                    return (
+                      <motion.div
+                        key={colIdx}
+                        initial={isRevealing ? { rotateX: 0 } : false}
+                        animate={isRevealing ? { rotateX: [0, 90, 0] } : {}}
+                        transition={{
+                          duration: 0.5,
+                          delay: colIdx * 0.15,
+                        }}
+                        className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center 
                         rounded-lg border-2 font-display font-black text-xl sm:text-2xl
                         ${FEEDBACK_COLORS[fb]}`}
-                    >
-                      {letter}
-                    </motion.div>
-                  );
-                } else if (isCurrentRow) {
-                  // Current input row
-                  const letter = colIdx === 0 && currentInput.length === 0
-                    ? displayState.firstLetter
-                    : currentInput[colIdx]?.toUpperCase();
-                  const isHint = colIdx === 0 && currentInput.length === 0;
-                  return (
-                    <motion.div
-                      key={colIdx}
-                      initial={{ scale: 0.9, opacity: 0.5 }}
-                      animate={{
-                        scale: letter ? 1 : 0.9,
-                        opacity: letter ? 1 : 0.5,
-                      }}
-                      className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center 
+                      >
+                        {letter}
+                      </motion.div>
+                    );
+                  } else if (isCurrentRow) {
+                    // Current input row
+                    const letter =
+                      colIdx === 0 && currentInput.length === 0
+                        ? displayState.firstLetter
+                        : currentInput[colIdx]?.toUpperCase();
+                    const isHint = colIdx === 0 && currentInput.length === 0;
+                    return (
+                      <motion.div
+                        key={colIdx}
+                        initial={{ scale: 0.9, opacity: 0.5 }}
+                        animate={{
+                          scale: letter ? 1 : 0.9,
+                          opacity: letter ? 1 : 0.5,
+                        }}
+                        className={`w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center 
                         rounded-lg border-2 font-display font-black text-xl sm:text-2xl
-                        ${isHint
-                          ? "bg-green-100 border-green-400 text-green-700"
-                          : letter
-                            ? "bg-white border-gray-400 text-gray-800"
-                            : "bg-gray-50 border-gray-200 text-gray-300"
+                        ${
+                          isHint
+                            ? "bg-green-100 border-green-400 text-green-700"
+                            : letter
+                              ? "bg-white border-gray-400 text-gray-800"
+                              : "bg-gray-50 border-gray-200 text-gray-300"
                         }`}
-                    >
-                      {letter ?? ""}
-                    </motion.div>
-                  );
-                } else {
-                  // Empty future row
-                  return (
-                    <div
-                      key={colIdx}
-                      className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center 
+                      >
+                        {letter ?? ""}
+                      </motion.div>
+                    );
+                  } else {
+                    // Empty future row
+                    return (
+                      <div
+                        key={colIdx}
+                        className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center 
                         rounded-lg border-2 border-gray-200 bg-gray-50"
-                    />
-                  );
-                }
-              })}
+                      />
+                    );
+                  }
+                },
+              )}
             </motion.div>
           );
         })}
@@ -317,7 +327,9 @@ export default function LingoGame({
         ref={inputRef}
         value={currentInput}
         onChange={(e) => {
-          const val = e.target.value.replace(/[^a-zA-Z]/g, "").slice(0, displayState.wordLength);
+          const val = e.target.value
+            .replace(/[^a-zA-Z]/g, "")
+            .slice(0, displayState.wordLength);
           setCurrentInput(val);
         }}
         onKeyDown={handleKeyDown}
@@ -335,9 +347,10 @@ export default function LingoGame({
         onClick={handleSubmit}
         disabled={currentInput.length !== displayState.wordLength}
         className={`px-6 py-2.5 rounded-xl font-display font-bold text-sm transition-all
-          ${currentInput.length === displayState.wordLength
-            ? "bg-green-500 text-white shadow-md hover:bg-green-600"
-            : "bg-gray-200 text-gray-400 cursor-not-allowed"
+          ${
+            currentInput.length === displayState.wordLength
+              ? "bg-green-500 text-white shadow-md hover:bg-green-600"
+              : "bg-gray-200 text-gray-400 cursor-not-allowed"
           }`}
       >
         Probeer
@@ -360,7 +373,8 @@ export default function LingoGame({
               const status = statuses.get(letter);
               let bgClass = "bg-gray-100 text-gray-700 hover:bg-gray-200";
               if (status === "correct") bgClass = "bg-green-500 text-white";
-              else if (status === "present") bgClass = "bg-yellow-400 text-yellow-900";
+              else if (status === "present")
+                bgClass = "bg-yellow-400 text-yellow-900";
               else if (status === "absent") bgClass = "bg-gray-500 text-white";
 
               return (
@@ -379,9 +393,10 @@ export default function LingoGame({
                 onClick={handleSubmit}
                 disabled={currentInput.length !== roundState.wordLength}
                 className={`px-2 py-2 rounded text-xs font-bold transition-colors min-w-[2rem]
-                  ${currentInput.length === displayState.wordLength
-                    ? "bg-green-500 text-white hover:bg-green-600"
-                    : "bg-gray-200 text-gray-400"
+                  ${
+                    currentInput.length === displayState.wordLength
+                      ? "bg-green-500 text-white hover:bg-green-600"
+                      : "bg-gray-200 text-gray-400"
                   }`}
               >
                 ↵

@@ -78,7 +78,7 @@ export interface PuzzelrondePuzzle {
   id: string;
   type: 'puzzelronde';
   difficulty: PuzzleDifficulty;
-  groups: [PuzzelrondeGroup, PuzzelrondeGroup, PuzzelrondeGroup];
+  groups: [PuzzelrondeGroup, PuzzelrondeGroup, PuzzelrondeGroup, PuzzelrondeGroup];
 }
 
 // ─── Open Deur ─────────────────────────────────────────
@@ -127,10 +127,9 @@ export interface ConnectionsRoundState {
 
 export interface PuzzelrondeRoundState {
   type: 'puzzelronde';
-  words: string[]; // shuffled 12 words
-  solvedGroups: { words: string[]; answerCorrect: boolean | null }[];
-  pendingAnswer: boolean; // waiting for player to type connecting word
-  attemptsLeft: number | null;
+  words: string[]; // shuffled 16 words (always all visible)
+  solvedGroups: { words: string[]; answer: string }[];
+  totalGroups: number;
   timeRemainingMs: number | null;
 }
 
@@ -232,7 +231,7 @@ export interface ServerToClientEvents {
   'countdown': (data: { count: number }) => void;
   'round-start': (data: { roundIndex: number; roundState: RoundState; roundType: RoundType }) => void;
   'group-result': (data: { correct: boolean; group?: ConnectionsGroup | { words: string[] }; roundState: RoundState; hintWords?: string[] }) => void;
-  'answer-result': (data: { correct: boolean; correctAnswer?: string; roundState: RoundState }) => void;
+  'answer-result': (data: { correct: boolean; groupWords?: string[]; roundState: RoundState }) => void;
   'opendeur-result': (data: { correct: boolean; matchedAnswer?: string; roundState: RoundState }) => void;
   'opendeur-next-question': (data: { roundState: RoundState; previousAnswers: string[] }) => void;
   'lingo-result': (data: { correct: boolean; feedback?: LingoLetterFeedback[]; roundState: RoundState }) => void;

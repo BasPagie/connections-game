@@ -353,12 +353,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'easy',
     groups: [
-      // Koningsdag, Geboortedag, Feestdag, Werkdag
-      { words: ['Konings', 'Geboorte', 'Feest', 'Werk'], answer: 'Dag' },
+      // Koningsdag, Geboortedag, Feestdag, Weekdag
+      { words: ['Konings', 'Geboorte', 'Feest', 'Week'], answer: 'Dag' },
       // Sneeuwbal, Voetbal, Handbal, Basketbal
       { words: ['Sneeuw', 'Voet', 'Hand', 'Basket'], answer: 'Bal' },
-      // Huiswerk, Handwerk, Kunstwerk, Maatwerk
-      { words: ['Huis', 'Hand', 'Kunst', 'Maat'], answer: 'Werk' },
+      // Huiswerk, Kunstwerk, Maatwerk, Netwerk
+      { words: ['Huis', 'Kunst', 'Maat', 'Net'], answer: 'Werk' },
+      // Slaapkamer, Woonkamer, Badkamer, Kleedkamer
+      { words: ['Slaap', 'Woon', 'Bad', 'Kleed'], answer: 'Kamer' },
     ],
   },
   {
@@ -372,6 +374,8 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
       { words: ['Voor', 'Buiten', 'Kamer', 'Achter'], answer: 'Deur' },
       // Zonlicht, Maanlicht, Daglicht, Kaarslicht
       { words: ['Zon', 'Maan', 'Dag', 'Kaars'], answer: 'Licht' },
+      // Armband, Polsband, Halsband, Haarband
+      { words: ['Arm', 'Pols', 'Hals', 'Haar'], answer: 'Band' },
     ],
   },
   {
@@ -379,12 +383,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'easy',
     groups: [
-      // Armband, Polsband, Halsband, Hoofdband
-      { words: ['Arm', 'Pols', 'Hals', 'Hoofd'], answer: 'Band' },
       // Broodmes, Zakmes, Keukenmes, Vleesmes
       { words: ['Brood', 'Zak', 'Keuken', 'Vlees'], answer: 'Mes' },
       // Kindertijd, Schooltijd, Speeltijd, Leeftijd
       { words: ['Kinder', 'School', 'Speel', 'Leef'], answer: 'Tijd' },
+      // Dagboek, Kookboek, Tekenboek, Plakboek
+      { words: ['Dag', 'Kook', 'Teken', 'Plak'], answer: 'Boek' },
+      // Bloempot, Koffiepot, Theepot, Verfpot
+      { words: ['Bloem', 'Koffie', 'Thee', 'Verf'], answer: 'Pot' },
     ],
   },
   {
@@ -392,19 +398,8 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'easy',
     groups: [
-      // Dagboek, Kookboek, Schoolboek, Plakboek
-      { words: ['Dag', 'Kook', 'School', 'Plak'], answer: 'Boek' },
-      // Bloempot, Koffiepot, Theepot, Verfpot
-      { words: ['Bloem', 'Koffie', 'Thee', 'Verf'], answer: 'Pot' },
       // Autoweg, Snelweg, Spoorweg, Ringweg
       { words: ['Auto', 'Snel', 'Spoor', 'Ring'], answer: 'Weg' },
-    ],
-  },
-  {
-    id: 'puzz-e5',
-    type: 'puzzelronde',
-    difficulty: 'easy',
-    groups: [
       // Ziekbed, Rivierbed, Waterbed, Bloembed
       { words: ['Ziek', 'Rivier', 'Water', 'Bloem'], answer: 'Bed' },
       // Appelsap, Druivensap, Tomatensap, Groentesap
@@ -414,36 +409,27 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     ],
   },
   {
-    id: 'puzz-e6',
+    id: 'puzz-e5',
     type: 'puzzelronde',
     difficulty: 'easy',
     groups: [
-      // Slaapkamer, Woonkamer, Badkamer, Kleedkamer
-      { words: ['Slaap', 'Woon', 'Bad', 'Kleed'], answer: 'Kamer' },
       // Boomhuis, Poppenhuis, Woonhuis, Klokhuis
       { words: ['Boom', 'Poppen', 'Woon', 'Klok'], answer: 'Huis' },
       // Boerenland, Vaderland, Binnenland, Buitenland
       { words: ['Boeren', 'Vader', 'Binnen', 'Buiten'], answer: 'Land' },
-    ],
-  },
-  {
-    id: 'puzz-e7',
-    type: 'puzzelronde',
-    difficulty: 'easy',
-    groups: [
       // Zeilboot, Motorboot, Roeiboot, Stoomboot
       { words: ['Zeil', 'Motor', 'Roei', 'Stoom'], answer: 'Boot' },
       // Schaatsbaan, Rijbaan, Renbaan, Loopbaan
       { words: ['Schaats', 'Rij', 'Ren', 'Loop'], answer: 'Baan' },
-      // Landkaart, Speelkaart, Postkaart, Weerkaart
-      { words: ['Land', 'Speel', 'Post', 'Weer'], answer: 'Kaart' },
     ],
   },
   {
-    id: 'puzz-e8',
+    id: 'puzz-e6',
     type: 'puzzelronde',
     difficulty: 'easy',
     groups: [
+      // Landkaart, Speelkaart, Postkaart, Weerkaart
+      { words: ['Land', 'Speel', 'Post', 'Weer'], answer: 'Kaart' },
       // Bureaustoel, Ligstoel, Kantoorstoel, Schommelstoel
       { words: ['Bureau', 'Lig', 'Kantoor', 'Schommel'], answer: 'Stoel' },
       // Handdoek, Theedoek, Vaatdoek, Hoofddoek
@@ -453,7 +439,7 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     ],
   },
   {
-    id: 'puzz-e9',
+    id: 'puzz-e7',
     type: 'puzzelronde',
     difficulty: 'easy',
     groups: [
@@ -463,6 +449,38 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
       { words: ['Tafel', 'Stoel', 'Piano', 'Kast'], answer: 'Poot' },
       // Wijnglas, Bierglas, Waterglas, Cocktailglas
       { words: ['Wijn', 'Bier', 'Water', 'Cocktail'], answer: 'Glas' },
+      // Wasmand, Broodmand, Fietsmand, Picknickmand
+      { words: ['Was', 'Brood', 'Fiets', 'Picknick'], answer: 'Mand' },
+    ],
+  },
+  {
+    id: 'puzz-e8',
+    type: 'puzzelronde',
+    difficulty: 'easy',
+    groups: [
+      // Handtas, Schooltas, Reistas, Boodschappentas
+      { words: ['Hand', 'School', 'Reis', 'Boodschappen'], answer: 'Tas' },
+      // Tafellamp, Bedlamp, Bureaulamp, Nachtlamp
+      { words: ['Tafel', 'Bed', 'Bureau', 'Nacht'], answer: 'Lamp' },
+      // Regenjas, Winterjas, Skijas, Reddingsjas
+      { words: ['Regen', 'Winter', 'Ski', 'Reddings'], answer: 'Jas' },
+      // Boekenkast, Klerenkast, Muurkast, IJskast
+      { words: ['Boeken', 'Kleren', 'Muur', 'IJs'], answer: 'Kast' },
+    ],
+  },
+  {
+    id: 'puzz-e9',
+    type: 'puzzelronde',
+    difficulty: 'easy',
+    groups: [
+      // Zandbak, Broodbak, Visbak, Afvalbak
+      { words: ['Zand', 'Brood', 'Vis', 'Afval'], answer: 'Bak' },
+      // Driehoek, Vierhoek, Binnenhoek, Buitenhoek
+      { words: ['Drie', 'Vier', 'Binnen', 'Buiten'], answer: 'Hoek' },
+      // Marktplein, Kerkplein, Dorpsplein, Schoolplein
+      { words: ['Markt', 'Kerk', 'Dorps', 'School'], answer: 'Plein' },
+      // Waterkraan, Brandkraan, Bouwkraan, Havenkraan
+      { words: ['Water', 'Brand', 'Bouw', 'Haven'], answer: 'Kraan' },
     ],
   },
   {
@@ -470,12 +488,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'easy',
     groups: [
-      // Wasmand, Broodmand, Fietsmand, Picknickmand
-      { words: ['Was', 'Brood', 'Fiets', 'Picknick'], answer: 'Mand' },
-      // Handtas, Schooltas, Reistas, Boodschappentas
-      { words: ['Hand', 'School', 'Reis', 'Boodschappen'], answer: 'Tas' },
-      // Tafellamp, Bedlamp, Bureaulamp, Nachtlamp
-      { words: ['Tafel', 'Bed', 'Bureau', 'Nacht'], answer: 'Lamp' },
+      // Ochtendblad, Avondblad, Dagblad, Nieuwsblad
+      { words: ['Ochtend', 'Avond', 'Dag', 'Nieuws'], answer: 'Blad' },
+      // Zonnebril, Leesbril, Zwembril, Duikbril
+      { words: ['Zonne', 'Lees', 'Zwem', 'Duik'], answer: 'Bril' },
+      // Goudvis, Zwaardvis, Stokvis, Zaagvis
+      { words: ['Goud', 'Zwaard', 'Stok', 'Zaag'], answer: 'Vis' },
+      // Haarnet, Vangnet, Sleepnet, Vlindernet
+      { words: ['Haar', 'Vang', 'Sleep', 'Vlinder'], answer: 'Net' },
     ],
   },
 
@@ -493,6 +513,8 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
       { words: ['Vuur', 'Kerk', 'Wacht', 'Uitkijk'], answer: 'Toren' },
       // Stamboom, Stamtafel, Stamgast, Stamcafé
       { words: ['Boom', 'Tafel', 'Gast', 'Café'], answer: 'Stam' },
+      // Lachspiegel, Handspiegel, Zijspiegel, Buitenspiegel
+      { words: ['Lach', 'Hand', 'Zij', 'Buiten'], answer: 'Spiegel' },
     ],
   },
   {
@@ -500,12 +522,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'medium',
     groups: [
-      // Lachspiegel, Handspiegel, Zijspiegel, Buitenspiegel
-      { words: ['Lach', 'Hand', 'Zij', 'Buiten'], answer: 'Spiegel' },
       // Deurslot, Hangslot, Cijferslot, Combinatieslot
       { words: ['Deur', 'Hang', 'Cijfer', 'Combinatie'], answer: 'Slot' },
       // Springveer, Ganzenveer, Bladveer, Schroefveer
       { words: ['Spring', 'Ganzen', 'Blad', 'Schroef'], answer: 'Veer' },
+      // Windmolen, Windkracht, Windstilte, Windhoos
+      { words: ['Molen', 'Kracht', 'Stil', 'Hoos'], answer: 'Wind' },
+      // Tuinschaar, Heggeschaar, Schapenschaar, Nagelschaar
+      { words: ['Tuin', 'Hegge', 'Schapen', 'Nagel'], answer: 'Schaar' },
     ],
   },
   {
@@ -513,10 +537,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'medium',
     groups: [
-      // Associatief: hints naar het antwoord
+      // Associatief: Piano
       { words: ['Toetsen', 'Vleugel', 'Pedaal', 'Concert'], answer: 'Piano' },
+      // Associatief: School
       { words: ['Bel', 'Krijtbord', 'Juf', 'Huiswerk'], answer: 'School' },
+      // Associatief: Camping
       { words: ['Tent', 'Zwembad', 'Caravan', 'Slagboom'], answer: 'Camping' },
+      // Klapbrug, Ophaalbrug, Voetbrug, Valbrug
+      { words: ['Klap', 'Ophaal', 'Voet', 'Val'], answer: 'Brug' },
     ],
   },
   {
@@ -524,12 +552,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'medium',
     groups: [
-      // Windmolen, Windkracht, Windstilte, Windhoos
-      { words: ['Molen', 'Kracht', 'Stilte', 'Hoos'], answer: 'Wind' },
-      // Tuinschaar, Heggeschaar, Schapenschaar, Nagelschaar
-      { words: ['Tuin', 'Hegge', 'Schapen', 'Nagel'], answer: 'Schaar' },
-      // Klapbrug, Ophaalbrug, Voetbrug, Valbrug
-      { words: ['Klap', 'Ophaal', 'Voet', 'Val'], answer: 'Brug' },
+      // Associatief: Maan
+      { words: ['Volle', 'Krater', 'Weerwolf', 'Armstrong'], answer: 'Maan' },
+      // Associatief: Koffie
+      { words: ['Filter', 'Bonen', 'Barista', 'Espresso'], answer: 'Koffie' },
+      // Associatief: Tequila
+      { words: ['Zout', 'Citroen', 'Mexico', 'Sunrise'], answer: 'Tequila' },
+      // Baksteen, Natuursteen, Hoeksteen, Grafsteen
+      { words: ['Bak', 'Natuur', 'Hoek', 'Graf'], answer: 'Steen' },
     ],
   },
   {
@@ -537,10 +567,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'medium',
     groups: [
-      // Associatief: hints naar het antwoord
-      { words: ['Volle', 'Krater', 'Weerwolf', 'Armstrong'], answer: 'Maan' },
-      { words: ['Filter', 'Bonen', 'Barista', 'Espresso'], answer: 'Koffie' },
-      { words: ['Zout', 'Citroen', 'Mexico', 'Sunrise'], answer: 'Tequila' },
+      // Brandhout, Drifthout, Sloophout, Kernhout
+      { words: ['Brand', 'Drift', 'Sloop', 'Kern'], answer: 'Hout' },
+      // Rijschool, Dansschool, Kookschool, Muziekschool
+      { words: ['Rij', 'Dans', 'Kook', 'Muziek'], answer: 'School' },
+      // Schrikkeljaar, Kalenderjaar, Nieuwjaar, Geboortejaar
+      { words: ['Schrikkel', 'Kalender', 'Nieuw', 'Geboorte'], answer: 'Jaar' },
+      // Waterval, Overval, Uitval, Aanval
+      { words: ['Water', 'Over', 'Uit', 'Aan'], answer: 'Val' },
     ],
   },
   {
@@ -548,40 +582,18 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'medium',
     groups: [
-      // Baksteen, Natuursteen, Hoeksteen, Grafsteen
-      { words: ['Bak', 'Natuur', 'Hoek', 'Graf'], answer: 'Steen' },
-      // Brandhout, Drifthout, Sloophout, Kernhout
-      { words: ['Brand', 'Drift', 'Sloop', 'Kern'], answer: 'Hout' },
-      // Rijschool, Dansschool, Kookschool, Muziekschool
-      { words: ['Rij', 'Dans', 'Kook', 'Muziek'], answer: 'School' },
-    ],
-  },
-  {
-    id: 'puzz-m7',
-    type: 'puzzelronde',
-    difficulty: 'medium',
-    groups: [
-      // Schrikkeljaar, Kalenderjaar, Nieuwjaar, Geboortejaar
-      { words: ['Schrikkel', 'Kalender', 'Nieuw', 'Geboorte'], answer: 'Jaar' },
-      // Waterval, Overval, Uitval, Aanval
-      { words: ['Water', 'Over', 'Uit', 'Aan'], answer: 'Val' },
       // Buslijn, Tramlijn, Hoogtelijn, Grenslijn
       { words: ['Bus', 'Tram', 'Hoogte', 'Grens'], answer: 'Lijn' },
-    ],
-  },
-  {
-    id: 'puzz-m8',
-    type: 'puzzelronde',
-    difficulty: 'medium',
-    groups: [
-      // Associatief: hints naar het antwoord
+      // Associatief: Voetbal
       { words: ['Goal', 'Buitenspel', 'Scheidsrechter', 'Grasmat'], answer: 'Voetbal' },
+      // Kerstboom, Kerstcadeau, Kerstkalkoen, Kerststal
       { words: ['Boom', 'Cadeau', 'Kalkoen', 'Stal'], answer: 'Kerst' },
+      // Associatief: Poker
       { words: ['Bluf', 'Fiches', 'Rivier', 'All-in'], answer: 'Poker' },
     ],
   },
   {
-    id: 'puzz-m9',
+    id: 'puzz-m7',
     type: 'puzzelronde',
     difficulty: 'medium',
     groups: [
@@ -591,6 +603,38 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
       { words: ['Wapen', 'Werk', 'Toren', 'Spuwer'], answer: 'Vuur' },
       // Zakgeld, Wisselgeld, Kleingeld, Spaargeld
       { words: ['Zak', 'Wissel', 'Klein', 'Spaar'], answer: 'Geld' },
+      // Huisdier, Roofdier, Zoogdier, Prooidier
+      { words: ['Huis', 'Roof', 'Zoog', 'Prooi'], answer: 'Dier' },
+    ],
+  },
+  {
+    id: 'puzz-m8',
+    type: 'puzzelronde',
+    difficulty: 'medium',
+    groups: [
+      // Filmster, Zeester, Popster, Rockster
+      { words: ['Film', 'Zee', 'Pop', 'Rock'], answer: 'Ster' },
+      // Oorring, Vingerring, Sleutelring, Boksring
+      { words: ['Oor', 'Vinger', 'Sleutel', 'Boks'], answer: 'Ring' },
+      // Kinderwagen, Bestelwagen, Vrachtwagen, Ziekenwagen
+      { words: ['Kinder', 'Bestel', 'Vracht', 'Zieken'], answer: 'Wagen' },
+      // Woonplaats, Geboorteplaats, Werkplaats, Zitplaats
+      { words: ['Woon', 'Geboorte', 'Werk', 'Zit'], answer: 'Plaats' },
+    ],
+  },
+  {
+    id: 'puzz-m9',
+    type: 'puzzelronde',
+    difficulty: 'medium',
+    groups: [
+      // Overmacht, Luchtmacht, Volmacht, Zeemacht
+      { words: ['Over', 'Lucht', 'Vol', 'Zee'], answer: 'Macht' },
+      // IJzerdraad, Koperdraad, Prikkeldraad, Telefoondraad
+      { words: ['IJzer', 'Koper', 'Prikkel', 'Telefoon'], answer: 'Draad' },
+      // Spierkracht, Daadkracht, Mankracht, Strijdkracht
+      { words: ['Spier', 'Daad', 'Man', 'Strijd'], answer: 'Kracht' },
+      // Landsgrens, Stadsgrens, Snelheidsgrens, Leeftijdsgrens
+      { words: ['Lands', 'Stads', 'Snelheids', 'Leeftijds'], answer: 'Grens' },
     ],
   },
   {
@@ -598,12 +642,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'medium',
     groups: [
-      // Huisdier, Roofdier, Zoogdier, Prooidier
-      { words: ['Huis', 'Roof', 'Zoog', 'Prooi'], answer: 'Dier' },
-      // Filmster, Zeester, Popster, Rockster
-      { words: ['Film', 'Zee', 'Pop', 'Rock'], answer: 'Ster' },
-      // Oorring, Vingerring, Sleutelring, Boksring
-      { words: ['Oor', 'Vinger', 'Sleutel', 'Boks'], answer: 'Ring' },
+      // Hartvorm, Stervorm, Eivorm, Ringvorm
+      { words: ['Hart', 'Ster', 'Ei', 'Ring'], answer: 'Vorm' },
+      // Brandweer, Afweer, Tegenweer, Noodweer
+      { words: ['Brand', 'Af', 'Tegen', 'Nood'], answer: 'Weer' },
+      // Strafrecht, Kiesrecht, Erfrecht, Familierecht
+      { words: ['Straf', 'Kies', 'Erf', 'Familie'], answer: 'Recht' },
+      // Bouwstof, Kleurstof, Grondstof, Springstof
+      { words: ['Bouw', 'Kleur', 'Grond', 'Spring'], answer: 'Stof' },
     ],
   },
 
@@ -621,6 +667,8 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
       { words: ['Hart', 'Vlinder', 'Borst', 'Rug'], answer: 'Slag' },
       // Ondergrond, Bovengrond, Achtergrond, Voorgrond
       { words: ['Onder', 'Boven', 'Achter', 'Voor'], answer: 'Grond' },
+      // Hoogtepunt, Dieptepunt, Keerpunt, Vriespunt
+      { words: ['Hoogte', 'Diepte', 'Keer', 'Vries'], answer: 'Punt' },
     ],
   },
   {
@@ -628,10 +676,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'hard',
     groups: [
-      // Associatief: hints naar het antwoord
+      // Associatief: Diamant
       { words: ['Slijpen', 'Karaat', 'Ring', 'Onbreekbaar'], answer: 'Diamant' },
+      // Associatief: Vulkaan
       { words: ['Lava', 'Uitbarsting', 'Krater', 'Pompeii'], answer: 'Vulkaan' },
+      // Associatief: Champagne
       { words: ['Bubbels', 'Frankrijk', 'Toast', 'Kurk'], answer: 'Champagne' },
+      // Associatief: Pyramide
+      { words: ['Farao', 'Egypte', 'Driehoek', 'Sfinx'], answer: 'Pyramide' },
     ],
   },
   {
@@ -639,12 +691,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'hard',
     groups: [
-      // Hoogtepunt, Dieptepunt, Keerpunt, Vriespunt
-      { words: ['Hoogte', 'Diepte', 'Keer', 'Vries'], answer: 'Punt' },
       // IJsberg, Zandberg, Rommelberg, Schuldenberg
       { words: ['IJs', 'Zand', 'Rommel', 'Schulden'], answer: 'Berg' },
       // Rietendak, Platdak, Pannendak, Stroodak
       { words: ['Rieten', 'Plat', 'Pannen', 'Stroo'], answer: 'Dak' },
+      // Boomblad, Schouderblad, Weekblad, Werkblad
+      { words: ['Boom', 'Schouder', 'Week', 'Werk'], answer: 'Blad' },
+      // Brandmuur, Geluidsmuur, Klimmuur, Klaagmuur
+      { words: ['Brand', 'Geluids', 'Klim', 'Klaag'], answer: 'Muur' },
     ],
   },
   {
@@ -652,12 +706,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'hard',
     groups: [
-      // Boomblad, Schouderblad, Weekblad, Werkblad
-      { words: ['Boom', 'Schouder', 'Week', 'Werk'], answer: 'Blad' },
-      // Brandmuur, Geluidsmuur, Klimmuur, Klaagmuur
-      { words: ['Brand', 'Geluids', 'Klim', 'Klaag'], answer: 'Muur' },
       // Dwaalspoor, Voetspoor, Bloedspoor, Karrenspoor
       { words: ['Dwaal', 'Voet', 'Bloed', 'Karren'], answer: 'Spoor' },
+      // Associatief: Titanic
+      { words: ['IJsberg', 'Onzinkbaar', 'DiCaprio', 'Ramp'], answer: 'Titanic' },
+      // Associatief: Chocolade
+      { words: ['Cacao', 'Bonbon', 'Reep', 'Belgie'], answer: 'Chocolade' },
+      // Grondwet, Natuurwet, Kieswet, Arbeidswet
+      { words: ['Grond', 'Natuur', 'Kies', 'Arbeids'], answer: 'Wet' },
     ],
   },
   {
@@ -665,10 +721,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'hard',
     groups: [
-      // Associatief: hints naar het antwoord
-      { words: ['Farao', 'Egypte', 'Driehoek', 'Sfinx'], answer: 'Pyramide' },
-      { words: ['IJsberg', 'Onzinkbaar', 'DiCaprio', 'Ramp'], answer: 'Titanic' },
-      { words: ['Cacao', 'Bonbon', 'Reep', 'Belgie'], answer: 'Chocolade' },
+      // Toneelstuk, Mondstuk, Muziekstuk, Kunststuk
+      { words: ['Toneel', 'Mond', 'Muziek', 'Kunst'], answer: 'Stuk' },
+      // Koplamp, Koploper, Koptelefoon, Kopbal
+      { words: ['Lamp', 'Loper', 'Telefoon', 'Bal'], answer: 'Kop' },
+      // Bloemsteel, Pannensteel, Bezemsteel, Bijlsteel
+      { words: ['Bloem', 'Pannen', 'Bezem', 'Bijl'], answer: 'Steel' },
+      // Goederentrein, Stoomtrein, Sneltrein, Nachttrein
+      { words: ['Goederen', 'Stoom', 'Snel', 'Nacht'], answer: 'Trein' },
     ],
   },
   {
@@ -676,40 +736,18 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'hard',
     groups: [
-      // Grondwet, Natuurwet, Kieswet, Arbeidswet
-      { words: ['Grond', 'Natuur', 'Kies', 'Arbeids'], answer: 'Wet' },
-      // Toneelstuk, Mondstuk, Muziekstuk, Kunststuk
-      { words: ['Toneel', 'Mond', 'Muziek', 'Kunst'], answer: 'Stuk' },
-      // Kopstuk, Koploper, Koptelefoon, Kopbal
-      { words: ['Stuk', 'Loper', 'Telefoon', 'Bal'], answer: 'Kop' },
-    ],
-  },
-  {
-    id: 'puzz-h7',
-    type: 'puzzelronde',
-    difficulty: 'hard',
-    groups: [
-      // Bloemsteel, Pannensteel, Bezemsteel, Bijlsteel
-      { words: ['Bloem', 'Pannen', 'Bezem', 'Bijl'], answer: 'Steel' },
-      // Goederentrein, Stoomtrein, Sneltrein, Nachttrein
-      { words: ['Goederen', 'Stoom', 'Snel', 'Nacht'], answer: 'Trein' },
       // Waterleiding, Stoomleiding, Gasleiding, Pijpleiding
       { words: ['Water', 'Stoom', 'Gas', 'Pijp'], answer: 'Leiding' },
-    ],
-  },
-  {
-    id: 'puzz-h8',
-    type: 'puzzelronde',
-    difficulty: 'hard',
-    groups: [
-      // Associatief: hints naar het antwoord
+      // Associatief: Bliksem
       { words: ['Donder', 'Inslag', 'Zigzag', 'Flits'], answer: 'Bliksem' },
+      // Associatief: Kompas
       { words: ['Noord', 'Naald', 'Roos', 'Richting'], answer: 'Kompas' },
+      // Associatief: Schaatsen
       { words: ['IJs', 'Klap', 'Baan', 'Glijden'], answer: 'Schaatsen' },
     ],
   },
   {
-    id: 'puzz-h9',
+    id: 'puzz-h7',
     type: 'puzzelronde',
     difficulty: 'hard',
     groups: [
@@ -719,6 +757,38 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
       { words: ['Naam', 'Grammofoon', 'Nummer', 'Kook'], answer: 'Plaat' },
       // Fietsketting, Halsketting, Sneeuwketting, Voedselketting
       { words: ['Fiets', 'Hals', 'Sneeuw', 'Voedsel'], answer: 'Ketting' },
+      // Struisvogel, Roofvogel, Trekvogel, Watervogel
+      { words: ['Struis', 'Roof', 'Trek', 'Water'], answer: 'Vogel' },
+    ],
+  },
+  {
+    id: 'puzz-h8',
+    type: 'puzzelronde',
+    difficulty: 'hard',
+    groups: [
+      // Strohoed, Zonnehoed, Gleufhoed, Feesthoed
+      { words: ['Stro', 'Zonne', 'Gleuf', 'Feest'], answer: 'Hoed' },
+      // Koplicht, Daglicht, Maanlicht, Zoeklicht
+      { words: ['Kop', 'Dag', 'Maan', 'Zoek'], answer: 'Licht' },
+      // Draaiorgel, Kerkorgel, Straatorgel, Pijporgel
+      { words: ['Draai', 'Kerk', 'Straat', 'Pijp'], answer: 'Orgel' },
+      // Kanonschot, Hagelschot, Geweerschot, Pistoolschot
+      { words: ['Kanon', 'Hagel', 'Geweer', 'Pistool'], answer: 'Schot' },
+    ],
+  },
+  {
+    id: 'puzz-h9',
+    type: 'puzzelronde',
+    difficulty: 'hard',
+    groups: [
+      // Slagader, Goudader, Hoofdader, Spatader
+      { words: ['Slag', 'Goud', 'Hoofd', 'Spat'], answer: 'Ader' },
+      // Regenworm, Lintworm, Aardworm, Boekenworm
+      { words: ['Regen', 'Lint', 'Aard', 'Boeken'], answer: 'Worm' },
+      // Kerkklok, Koekoeksklok, Alarmklok, Wandklok
+      { words: ['Kerk', 'Koekoeks', 'Alarm', 'Wand'], answer: 'Klok' },
+      // Handschrift, Tijdschrift, Voorschrift, Bijschrift
+      { words: ['Hand', 'Tijd', 'Voor', 'Bij'], answer: 'Schrift' },
     ],
   },
   {
@@ -726,12 +796,14 @@ const puzzelrondePuzzles: PuzzelrondePuzzle[] = [
     type: 'puzzelronde',
     difficulty: 'hard',
     groups: [
-      // Struisvogel, Roofvogel, Trekvogel, Watervogel
-      { words: ['Struis', 'Roof', 'Trek', 'Water'], answer: 'Vogel' },
-      // Strohoed, Zonnehoed, Gleufhoed, Feesthoed
-      { words: ['Stro', 'Zonne', 'Gleuf', 'Feest'], answer: 'Hoed' },
-      // Koplicht, Daglicht, Maanlicht, Zoeklicht
-      { words: ['Kop', 'Dag', 'Maan', 'Zoek'], answer: 'Licht' },
+      // Doorgang, Toegang, Opgang, Rondgang
+      { words: ['Door', 'Toe', 'Op', 'Rond'], answer: 'Gang' },
+      // Kruistocht, Voettocht, Boottocht, Fietstocht
+      { words: ['Kruis', 'Voet', 'Boot', 'Fiets'], answer: 'Tocht' },
+      // Balspel, Kaartspel, Woordspel, Schouwspel
+      { words: ['Bal', 'Kaart', 'Woord', 'Schouw'], answer: 'Spel' },
+      // Landstreek, Wijnstreek, Kunststreek, Luchtstreek
+      { words: ['Land', 'Wijn', 'Kunst', 'Lucht'], answer: 'Streek' },
     ],
   },
 ];
