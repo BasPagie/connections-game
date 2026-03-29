@@ -179,7 +179,7 @@ export default function OpenDeurGame({
           className="px-5 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 
                      font-display font-bold text-sm transition-all active:scale-95"
         >
-          Vraag overslaan →
+          Volgende vraag →
         </button>
       </div>
     </div>

@@ -350,7 +350,7 @@ export default function Lobby() {
                   name="Open Deur"
                   color="amber"
                   short="3 vragen, typ zoveel goede antwoorden als je kan."
-                  long="Ook geïnspireerd door De Slimste Mens! 3 vragen met elk 4 juiste antwoorden. Typ ze zo snel mogelijk — 50 punten per goed antwoord. Geen straf voor fout, dus gewoon proberen. Vraag overslaan kan ook."
+                  long="Ook geïnspireerd door De Slimste Mens! 3 vragen met elk 4 juiste antwoorden. Typ ze zo snel mogelijk — 50 punten per goed antwoord. Geen straf voor fout, dus gewoon proberen. Volgende vraag als je vastzit."
                 />
 
                 <GameModeCard
