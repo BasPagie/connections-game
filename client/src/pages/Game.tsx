@@ -264,7 +264,7 @@ export default function Game() {
     state.roundState.type === "connections"
       ? 4
       : state.roundState.type === "puzzelronde"
-        ? 3
+        ? 4
         : state.roundState.type === "lingo"
           ? 3 // 3 words
           : 12; // opendeur: 3 questions × 4 answers

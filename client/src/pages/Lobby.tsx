@@ -17,7 +17,8 @@ export default function Lobby() {
   const socket = useSocket();
   const { state } = useGame();
   const [copied, setCopied] = useState(false);
-  const [showInfo, setShowInfo] = useState(false);
+  const isFirstVisit = !localStorage.getItem("woordspel-rules-seen");
+  const [showInfo, setShowInfo] = useState(isFirstVisit);
   const [waitExpired, setWaitExpired] = useState(false);
 
   const session = getSession();
@@ -310,7 +311,10 @@ export default function Lobby() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
-            onClick={() => setShowInfo(false)}
+            onClick={() => {
+              setShowInfo(false);
+              localStorage.setItem("woordspel-rules-seen", "1");
+            }}
           >
             <motion.div
               initial={{ scale: 0.85, y: 20 }}
@@ -330,15 +334,15 @@ export default function Lobby() {
                   name="Connections"
                   color="blue"
                   short="16 woorden, 4 groepen. Ken je van de NYT."
-                  long="Gebaseerd op het spel Connections van de New York Times. Je ziet 16 woorden en moet ze in 4 groepen van 4 verdelen. Tik 4 woorden aan en bevestig. 100 punten per goede groep, -25 bij fout. Zit je er bijna? Dan kleuren de goed gekozen woorden geel als hint."
+                  long="Je ziet 16 woorden en moet ze in 4 groepen van 4 verdelen. Tik 4 woorden aan en bevestig. 100 punten per goede groep, -25 bij fout. Zit je er bijna? Dan kleuren de goed gekozen woorden geel als hint."
                 />
 
                 <GameModeCard
                   icon="🧩"
                   name="Puzzelronde"
                   color="purple"
-                  short="Groepjes maken + verbindend woord raden."
-                  long="Spel die gespeeld wordt bij De Slimste Mens: 12 woorden in 3 groepen van 4. Eerst de groep selecteren, dan het verbindende woord typen. 100 punten per groep, 150 bonus voor het juiste woord. Typfoutjes mag."
+                  short="16 woorden, raad het verbindende woord."
+                  long="Geïnspireerd door De Slimste Mens. Je ziet 16 woorden die in 4 groepen van 4 horen. Elk groepje deelt een verbindend woord — typ dat woord in om de groep op te lossen. 150 punten per goed antwoord, geen straf voor fout. Typfoutjes worden door de vingers gezien."
                 />
 
                 <GameModeCard
@@ -346,7 +350,7 @@ export default function Lobby() {
                   name="Open Deur"
                   color="amber"
                   short="3 vragen, typ zoveel goede antwoorden als je kan."
-                  long="Ook van De Slimste Mens! 3 vragen met elk 4 juiste antwoorden. Typ ze zo snel mogelijk — 50 punten per goed antwoord. Geen straf voor fout, dus gewoon proberen. Vraag overslaan kan ook."
+                  long="Ook geïnspireerd door De Slimste Mens! 3 vragen met elk 4 juiste antwoorden. Typ ze zo snel mogelijk — 50 punten per goed antwoord. Geen straf voor fout, dus gewoon proberen. Vraag overslaan kan ook."
                 />
 
                 <GameModeCard
@@ -354,7 +358,7 @@ export default function Lobby() {
                   name="Lingo"
                   color="green"
                   short="Raad het 5-letter woord in zo min mogelijk beurten."
-                  long="Gebaseerd op het populaire TV-programma Lingo! Je krijgt de eerste letter als hint en hebt 5 pogingen om het woord te raden. Groene letter = juiste plek, gele letter = zit in het woord maar verkeerde plek, grijs = zit er niet in. 100 punten per geraden woord + 20 bonus per ongebruikte poging. 3 woorden per ronde."
+                  long="Je krijgt de eerste letter als hint en hebt 5 pogingen om het woord te raden. 🟩 Groen = juiste plek, 🟨 geel = zit in het woord maar verkeerde plek, ⬜ grijs = zit er niet in. 100 punten per geraden woord + 20 bonus per overgebleven poging. 3 woorden per ronde."
                 />
 
                 <div className="border-t border-gray-100 pt-3">
@@ -370,7 +374,10 @@ export default function Lobby() {
               </div>
 
               <button
-                onClick={() => setShowInfo(false)}
+                onClick={() => {
+                  setShowInfo(false);
+                  localStorage.setItem("woordspel-rules-seen", "1");
+                }}
                 className="btn-primary w-full mt-4"
               >
                 Begrepen! 👍

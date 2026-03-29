@@ -45,7 +45,7 @@ export default function ProgressSidebar({
           const isEmoji =
             PREMADE_AVATARS.includes(player.avatarUrl) ||
             player.avatarUrl.length <= 2;
-          const progressFraction = p.solvedCount / totalGroups;
+          const progressFraction = Math.min(p.solvedCount / totalGroups, 1);
 
           return (
             <div
