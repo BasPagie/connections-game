@@ -465,24 +465,50 @@ Expected:
 ### 4.2 Puzzelronde
 
 ```
-[GM-05] [P0] Solve group then guess connecting word
+[GM-05] [P0] Type correct connecting word
+Preconditions: Puzzelronde round active, 16 words visible in 4×4 grid
+Steps:
+  1. Identify 4 words that share a connecting word
+  2. Type the connecting word in the input field
+  3. Submit
+Expected:
+  - Group revealed with color highlighting and answer badge
+  - +150 points
+  - Progress updates ("X/4 groepen gevonden")
+  - All 16 words remain visible (solved ones highlighted)
+```
+
+```
+[GM-05b] [P1] Type wrong connecting word
 Preconditions: Puzzelronde round active
 Steps:
-  1. Select 4 words forming a group → submit
-  2. Type the connecting word → submit
+  1. Type a word that doesn't connect any unsolved group
+  2. Submit
 Expected:
-  - Group revealed
-  - If connecting word correct: +150 points
-  - If incorrect: correct answer shown, no bonus
+  - Brief red "Niet goed..." feedback
+  - No score penalty
+  - Input cleared, can try again
 ```
 
 ```
 [GM-06] [P1] Fuzzy matching on connecting word
-Preconditions: Correct answer is "schepen"
+Preconditions: Correct answer is "schrift"
 Steps:
-  1. Type "scheppen" (close but not exact)
+  1. Type "schrift" or "Schrift" or "schrift " (trailing space)
 Expected:
-  - Accepted as correct (Levenshtein distance ≤ 2 for words ≥ 6 chars)
+  - Accepted as correct (case-insensitive, trimmed, Levenshtein distance ≤ 2 for words ≥ 6 chars)
+```
+
+```
+[GM-06b] [P1] Puzzelronde word grid stays stable
+Preconditions: Puzzelronde round active
+Steps:
+  1. Note the position of all 16 words
+  2. Submit a correct connecting word
+  3. Check word positions again
+Expected:
+  - Words remain in the same positions (no re-shuffle)
+  - Solved group words are highlighted but not moved
 ```
 
 ### 4.3 Open Deur
@@ -511,14 +537,25 @@ Expected:
 ```
 
 ```
-[GM-09] [P1] Skip question
+[GM-09] [P1] Skip question (Volgende vraag)
 Preconditions: Open Deur round active
 Steps:
-  1. Click skip / next question button
+  1. Click "Volgende vraag →" button
 Expected:
   - Advances to next question
   - Previous answers revealed
   - If last question → player finished
+```
+
+```
+[GM-09b] [P1] Last answer completes question with visual feedback
+Preconditions: Open Deur question with 3 of 4 answers found
+Steps:
+  1. Type the 4th correct answer
+Expected:
+  - Answer appears in the correct slot with green flash animation
+  - Brief pause (~0.8s) showing all 4 found answers
+  - Then automatically transitions to next question (or finishes)
 ```
 
 ### 4.4 Lingo
@@ -742,36 +779,59 @@ Expected:
 ## 8. Scoring
 
 ```
-[SC-01] [P1] Base score for correct group (Connections/Puzzelronde)
-Preconditions: Active round
+[SC-01] [P1] Base score for correct group (Connections)
+Preconditions: Connections round active
 Steps:
-  1. Submit a correct group
+  1. Submit a correct group of 4 words
 Expected:
   - +100 points per group
 ```
 
 ```
-[SC-02] [P1] Connecting word bonus (Puzzelronde)
-Preconditions: Group just solved in Puzzelronde
+[SC-01b] [P1] Base score for connecting word (Puzzelronde)
+Preconditions: Puzzelronde round active
 Steps:
-  1. Enter correct connecting word
+  1. Type a correct connecting word
 Expected:
-  - +150 points bonus
+  - +150 points per correct connecting word
+  - No penalty for wrong guesses
+```
+
+```
+[SC-02] [P1] Open Deur scoring
+Preconditions: Open Deur round active
+Steps:
+  1. Type correct answers to questions
+Expected:
+  - +50 points per correct answer
+  - No penalty for wrong answers
+```
+
+```
+[SC-02b] [P1] Lingo scoring
+Preconditions: Lingo round active
+Steps:
+  1. Guess a word correctly in 3 attempts
+Expected:
+  - +100 base points for correct word
+  - +20 bonus per unused attempt (2 unused × 20 = +40)
+  - Total: +140 points for this word
 ```
 
 ```
 [SC-03] [P1] Speed bonus on round completion
 Preconditions: Timer enabled, player finished early
 Steps:
-  1. Complete round quickly
+  1. Complete round quickly (any game mode)
 Expected:
   - Speed bonus = 2 points per second remaining
+  - Applied to all 4 game modes
   - Visible in round-end results
 ```
 
 ```
-[SC-04] [P1] Wrong guess penalty (limited attempts)
-Preconditions: attemptsMode=limited
+[SC-04] [P1] Wrong guess penalty (Connections, limited attempts)
+Preconditions: attemptsMode=limited, Connections round
 Steps:
   1. Submit incorrect group
 Expected:
@@ -917,6 +977,69 @@ Steps:
   1. Click × next to bot name in Dev Tools
 Expected:
   - Bot removed from player list
+```
+
+## 12. Rules Modal
+
+```
+[RL-01] [P1] Rules modal auto-shows on first visit
+Preconditions: Never visited before (clear localStorage)
+Steps:
+  1. Create or join a room for the first time
+Expected:
+  - Rules modal ("📖 Hoe werkt het?") opens automatically
+  - All 4 game modes explained with expandable cards
+  - "Begrepen! 👍" button visible
+```
+
+```
+[RL-02] [P1] Rules modal does not auto-show on subsequent visits
+Preconditions: Have dismissed rules modal once before
+Steps:
+  1. Create or join another room
+Expected:
+  - Rules modal does NOT open automatically
+  - "📖 Uitleg" button still visible in lobby header
+  - Clicking "📖 Uitleg" opens the modal manually
+```
+
+```
+[RL-03] [P2] Rules modal content is accurate
+Preconditions: Open rules modal
+Steps:
+  1. Read each game mode explanation
+Expected:
+  - Connections: 16 words, 4 groups, +100 per group, -25 penalty
+  - Puzzelronde: 16 words, 4 groups, type connecting word, +150 per answer
+  - Open Deur: 3 questions, 4 answers each, +50 per answer
+  - Lingo: 5-letter words, first letter hint, 🟩🟨⬜ feedback, +100 + bonus
+```
+
+---
+
+## 13. Round End Overlay
+
+```
+[RE-01] [P1] Correct game mode label shown
+Preconditions: Any round just ended
+Steps:
+  1. Observe round-end overlay
+Expected:
+  - Connections round shows: "🔗 Connections"
+  - Puzzelronde shows: "🧩 Puzzelronde"
+  - Open Deur shows: "🚪 Open Deur"
+  - Lingo shows: "🟩 Lingo"
+```
+
+```
+[RE-02] [P1] Correct stats shown per game mode
+Preconditions: Last round just ended
+Steps:
+  1. Check own stats in round-end overlay
+Expected:
+  - Connections/Puzzelronde: shows groups found + words
+  - Open Deur: shows number of answers
+  - Lingo: shows "X woorden geraden"
 ```
 
 ---

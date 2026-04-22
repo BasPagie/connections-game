@@ -41,6 +41,7 @@ interface PlayerRoundTracker {
   lingoCurrentWordIndex: number;
   lingoGuessesPerWord: Map<number, LingoGuess[]>;
   lingoCompletedWords: LingoWordResult[];
+  shuffledWords?: string[]; // stable shuffle for puzzelronde
 }
 
 // ─── Game instance per room ────────────────────────────
@@ -208,6 +209,7 @@ function buildRoundState(instance: GameInstance, room: GameRoom): RoundState {
       question: firstQuestion.question,
       foundAnswers: [],
       answerHints: firstQuestion.answers.map((a) => a[0].toUpperCase()),
+      foundAnswerSlots: firstQuestion.answers.map(() => null),
       totalAnswers: firstQuestion.answers.length,
       totalQuestions: puzzle.questions.length,
       timeRemainingMs,
@@ -255,12 +257,14 @@ export function getPlayerRoundState(roomId: string, playerId: string, room: Game
       words: puzzle.groups[i].words,
       answer: puzzle.groups[i].answer,
     }));
-    // Always show all words (shuffled)
-    const allWords = shuffle(puzzle.groups.flatMap((g) => g.words));
+    // Use stable shuffled order from tracker (set on first call)
+    if (!tracker.shuffledWords) {
+      tracker.shuffledWords = shuffle(puzzle.groups.flatMap((g) => g.words));
+    }
 
     return {
       type: 'puzzelronde',
-      words: allWords,
+      words: tracker.shuffledWords,
       solvedGroups,
       totalGroups: puzzle.groups.length,
       timeRemainingMs,
@@ -291,6 +295,10 @@ export function getPlayerRoundState(roomId: string, playerId: string, room: Game
     const answerHints = question.answers.map((a) =>
       foundLower.has(a.toLowerCase()) ? null : a[0].toUpperCase()
     );
+    // Map found answers to their original positions
+    const foundAnswerSlots = question.answers.map((a) =>
+      foundLower.has(a.toLowerCase()) ? a : null
+    );
 
     return {
       type: 'opendeur',
@@ -298,6 +306,7 @@ export function getPlayerRoundState(roomId: string, playerId: string, room: Game
       question: question.question,
       foundAnswers: found,
       answerHints,
+      foundAnswerSlots,
       totalAnswers: question.answers.length,
       totalQuestions: puzzle.questions.length,
       timeRemainingMs,
@@ -476,6 +485,7 @@ export function submitOpenDeurAnswer(
   roomId: string,
   playerId: string,
   answer: string,
+  room: GameRoom,
 ): OpenDeurAnswerResult | null {
   const instance = activeGames.get(roomId);
   if (!instance || instance.puzzle.type !== 'opendeur') return null;
@@ -503,14 +513,20 @@ export function submitOpenDeurAnswer(
 
       const questionComplete = found.length >= question.answers.length;
 
-      // Auto-advance if all answers found
+      // Don't auto-advance here — let the socket handler get the completed state first,
+      // then call advanceOpenDeurQuestion() to move to the next question.
+
       if (questionComplete) {
         const isLastQuestion = qIdx >= puzzle.questions.length - 1;
         if (isLastQuestion) {
           tracker.finished = true;
           tracker.endTime = Date.now();
-        } else {
-          tracker.currentQuestionIndex++;
+          // Speed bonus for finishing early
+          if (room.settings.timeLimitSeconds) {
+            const timeTakenMs = tracker.endTime - tracker.startTime;
+            const bonus = Math.max(0, Math.floor((room.settings.timeLimitSeconds * 1000 - timeTakenMs) / 1000) * 2);
+            tracker.score += bonus;
+          }
         }
       }
 
@@ -558,6 +574,26 @@ export function skipOpenDeurQuestion(
     playerFinished: tracker.finished,
     previousAnswers,
   };
+}
+
+// ─── Advance Open Deur to next question (after questionComplete) ──
+export function advanceOpenDeurQuestion(
+  roomId: string,
+  playerId: string,
+): void {
+  const instance = activeGames.get(roomId);
+  if (!instance || instance.puzzle.type !== 'opendeur') return;
+
+  const tracker = instance.playerTrackers.get(playerId);
+  if (!tracker || tracker.finished) return;
+
+  const puzzle = instance.puzzle as OpenDeurPuzzle;
+  const qIdx = tracker.currentQuestionIndex;
+  const isLastQuestion = qIdx >= puzzle.questions.length - 1;
+
+  if (!isLastQuestion) {
+    tracker.currentQuestionIndex++;
+  }
 }
 
 // ─── Submit Lingo guess ────────────────────────────────

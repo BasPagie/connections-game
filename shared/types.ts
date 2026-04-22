@@ -139,6 +139,7 @@ export interface OpenDeurRoundState {
   question: string;
   foundAnswers: string[]; // answers the player has found so far
   answerHints: (string | null)[]; // per-slot: first letter hint if unfound, null if found (original answer order)
+  foundAnswerSlots: (string | null)[]; // per-slot: matched answer text if found, null if unfound (original answer order)
   totalAnswers: number; // always 4
   totalQuestions: number; // always 3
   timeRemainingMs: number | null;
@@ -232,7 +233,7 @@ export interface ServerToClientEvents {
   'round-start': (data: { roundIndex: number; roundState: RoundState; roundType: RoundType }) => void;
   'group-result': (data: { correct: boolean; group?: ConnectionsGroup | { words: string[] }; roundState: RoundState; hintWords?: string[] }) => void;
   'answer-result': (data: { correct: boolean; groupWords?: string[]; roundState: RoundState }) => void;
-  'opendeur-result': (data: { correct: boolean; matchedAnswer?: string; roundState: RoundState }) => void;
+  'opendeur-result': (data: { correct: boolean; matchedAnswer?: string; roundState: RoundState; questionComplete?: boolean }) => void;
   'opendeur-next-question': (data: { roundState: RoundState; previousAnswers: string[] }) => void;
   'lingo-result': (data: { correct: boolean; feedback?: LingoLetterFeedback[]; roundState: RoundState }) => void;
   'lingo-next-word': (data: { roundState: RoundState; previousWord: string }) => void;

@@ -321,7 +321,7 @@ export default function Lobby() {
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.85, y: 20 }}
               transition={{ type: "spring", damping: 20 }}
-              className="bg-white rounded-3xl shadow-2xl p-6 max-w-md w-full max-h-[80vh] overflow-y-auto"
+              className="bg-white rounded-3xl shadow-2xl p-6 max-w-md md:max-w-lg w-full max-h-[90dvh] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <h2 className="font-display font-black text-xl text-gray-800 mb-4 text-center">
@@ -334,7 +334,13 @@ export default function Lobby() {
                   name="Connections"
                   color="blue"
                   short="16 woorden, 4 groepen. Ken je van de NYT."
-                  long="Je ziet 16 woorden en moet ze in 4 groepen van 4 verdelen. Tik 4 woorden aan en bevestig. 100 punten per goede groep, -25 bij fout. Zit je er bijna? Dan kleuren de goed gekozen woorden geel als hint."
+                  details={[
+                    "Verdeel 16 woorden in 4 groepen van 4",
+                    "Tik 4 woorden aan en bevestig je keuze",
+                    "🎯 +100 punten per goede groep",
+                    "❌ -25 punten bij een foute gok",
+                    "💡 Bijna goed? Juiste woorden kleuren geel als hint",
+                  ]}
                 />
 
                 <GameModeCard
@@ -342,7 +348,13 @@ export default function Lobby() {
                   name="Puzzelronde"
                   color="purple"
                   short="16 woorden, raad het verbindende woord."
-                  long="Geïnspireerd door De Slimste Mens. Je ziet 16 woorden die in 4 groepen van 4 horen. Elk groepje deelt een verbindend woord — typ dat woord in om de groep op te lossen. 150 punten per goed antwoord, geen straf voor fout. Typfoutjes worden door de vingers gezien."
+                  details={[
+                    "Je ziet 16 woorden die in 4 groepen van 4 horen",
+                    "Elk groepje deelt een verbindend woord",
+                    "Typ het verbindende woord in om de groep op te lossen",
+                    "🎯 +150 punten per goed antwoord",
+                    "✅ Geen straf voor fout, typfoutjes worden geaccepteerd",
+                  ]}
                 />
 
                 <GameModeCard
@@ -350,7 +362,13 @@ export default function Lobby() {
                   name="Open Deur"
                   color="amber"
                   short="3 vragen, typ zoveel goede antwoorden als je kan."
-                  long="Ook geïnspireerd door De Slimste Mens! 3 vragen met elk 4 juiste antwoorden. Typ ze zo snel mogelijk — 50 punten per goed antwoord. Geen straf voor fout, dus gewoon proberen. Volgende vraag als je vastzit."
+                  details={[
+                    "3 vragen met elk 4 juiste antwoorden",
+                    "Je ziet de eerste letter van elk antwoord als hint",
+                    "🎯 +50 punten per goed antwoord",
+                    "✅ Geen straf voor fout, gewoon proberen!",
+                    "➡️ Vastzit? Ga naar de volgende vraag",
+                  ]}
                 />
 
                 <GameModeCard
@@ -358,7 +376,14 @@ export default function Lobby() {
                   name="Lingo"
                   color="green"
                   short="Raad het 5-letter woord in zo min mogelijk beurten."
-                  long="Je krijgt de eerste letter als hint en hebt 5 pogingen om het woord te raden. 🟩 Groen = juiste plek, 🟨 geel = zit in het woord maar verkeerde plek, ⬜ grijs = zit er niet in. 100 punten per geraden woord + 20 bonus per overgebleven poging. 3 woorden per ronde."
+                  details={[
+                    "Je krijgt de eerste letter als hint, 5 pogingen per woord",
+                    "🟩 Groen = juiste letter, juiste plek",
+                    "🟨 Geel = letter zit in het woord, verkeerde plek",
+                    "⬜ Grijs = letter zit niet in het woord",
+                    "🎯 +100 punten per woord + 20 bonus per overgebleven poging",
+                    "🔢 3 woorden per ronde",
+                  ]}
                 />
 
                 <div className="border-t border-gray-100 pt-3">
@@ -409,54 +434,64 @@ function GameModeCard({
   name,
   color,
   short,
-  long,
+  details,
 }: {
   icon: string;
   name: string;
   color: string;
   short: string;
-  long: string;
+  details: string[];
 }) {
   const [expanded, setExpanded] = useState(false);
 
   return (
     <button
       onClick={() => setExpanded(!expanded)}
-      className={`w-full text-left rounded-xl p-3 transition-all ${BG_COLORS[color]}`}
+      className={`w-full text-left rounded-xl p-3 transition-all ${BG_COLORS[color]} hover:brightness-95 active:scale-[0.99]`}
     >
       <div className="flex gap-3 items-start">
         <span className="text-lg shrink-0">{icon}</span>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center justify-between">
             <span className={`font-display font-bold ${TEXT_COLORS[color]}`}>
               {name}
             </span>
-            <svg
-              className={`w-3.5 h-3.5 text-gray-400 transition-transform ${expanded ? "rotate-180" : ""}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
+            <span
+              className={`flex items-center gap-1 text-xs font-display font-bold ${TEXT_COLORS[color]} opacity-60`}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
+              {expanded ? "Minder" : "Meer info"}
+              <svg
+                className={`w-3.5 h-3.5 transition-transform ${expanded ? "rotate-180" : ""}`}
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </span>
           </div>
           <p className="text-gray-600 mt-0.5">{short}</p>
           <AnimatePresence>
             {expanded && (
-              <motion.p
+              <motion.ul
                 initial={{ height: 0, opacity: 0 }}
                 animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="text-gray-500 mt-2 overflow-hidden"
+                className="mt-2 space-y-1 overflow-hidden text-gray-500"
               >
-                {long}
-              </motion.p>
+                {details.map((item, i) => (
+                  <li key={i} className="flex gap-2 items-start">
+                    <span className="text-gray-300 select-none">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </motion.ul>
             )}
           </AnimatePresence>
         </div>

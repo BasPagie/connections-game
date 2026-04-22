@@ -30,6 +30,7 @@ import {
   submitAnswer,
   submitOpenDeurAnswer,
   skipOpenDeurQuestion,
+  advanceOpenDeurQuestion,
   submitLingoGuess,
   getPlayerProgress,
   isRoundComplete,
@@ -305,23 +306,40 @@ export function registerSocketHandlers(io: IOServer, socket: IOSocket): void {
     const room = getRoom(mapping.roomId);
     if (!room || room.status !== 'playing') return;
 
-    const result = submitOpenDeurAnswer(mapping.roomId, mapping.playerId, answer);
+    const result = submitOpenDeurAnswer(mapping.roomId, mapping.playerId, answer, room);
     if (!result) return;
 
+    // Get round state BEFORE advancing (so completed question view is included)
     const roundState = getPlayerRoundState(mapping.roomId, mapping.playerId, room);
     if (!roundState) return;
 
     if (result.correct && result.questionComplete) {
-      // Question complete — send next question state or finish
-      socket.emit('opendeur-next-question', {
+      // Emit the completed state so client can flash the last answer
+      socket.emit('opendeur-result', {
+        correct: true,
+        matchedAnswer: result.matchedAnswer,
         roundState,
-        previousAnswers: [], // client already knows found answers
+        questionComplete: true,
       });
+      // Now advance to next question (if not finished) and send the new state after a delay
+      if (!result.playerFinished) {
+        advanceOpenDeurQuestion(mapping.roomId, mapping.playerId);
+        const nextRoundState = getPlayerRoundState(mapping.roomId, mapping.playerId, room);
+        if (nextRoundState) {
+          setTimeout(() => {
+            socket.emit('opendeur-next-question', {
+              roundState: nextRoundState,
+              previousAnswers: [],
+            });
+          }, 800);
+        }
+      }
     } else {
       socket.emit('opendeur-result', {
         correct: result.correct,
         matchedAnswer: result.matchedAnswer,
         roundState,
+        questionComplete: false,
       });
     }
 

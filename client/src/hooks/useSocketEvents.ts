@@ -66,7 +66,7 @@ export function useSocketEvents() {
       dispatch({ type: 'UPDATE_ROUND_STATE', roundState, answerResult: { correct } });
     });
 
-    socket.on('opendeur-result', ({ correct, matchedAnswer, roundState }) => {
+    socket.on('opendeur-result', ({ correct, matchedAnswer, roundState, questionComplete }) => {
       dispatch({ type: 'UPDATE_ROUND_STATE', roundState });
     });
 

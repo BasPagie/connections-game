@@ -62,7 +62,9 @@ export default function RoundEndOverlay({
             ? "🔗 Connections"
             : result.roundType === "puzzelronde"
               ? "🧩 Puzzelronde"
-              : "🚪 Open Deur"}
+              : result.roundType === "lingo"
+                ? "🟩 Lingo"
+                : "🚪 Open Deur"}
         </p>
 
         {/* Last round: show own score or spectator message */}
@@ -97,6 +99,14 @@ export default function RoundEndOverlay({
                           ? "antwoord"
                           : "antwoorden"}
                       </span>
+                    ) : result.roundType === "lingo" ? (
+                      <>
+                        <span>
+                          🟩 {myResult.correctAnswers}{" "}
+                          {myResult.correctAnswers === 1 ? "woord" : "woorden"}{" "}
+                          geraden
+                        </span>
+                      </>
                     ) : (
                       <>
                         <span>

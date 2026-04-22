@@ -19,9 +19,11 @@ export default function OpenDeurGame({
   const inputRef = useRef<HTMLInputElement>(null);
   const wrongCountRef = useRef(0);
 
-  // Focus input on mount and question change
+  // Focus input on mount and question change, reset wrong counter
   useEffect(() => {
     inputRef.current?.focus();
+    wrongCountRef.current = 0;
+    prevFoundRef.current = [];
   }, [roundState.currentQuestionIndex]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -97,16 +99,13 @@ export default function OpenDeurGame({
       <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-4 sm:mb-6">
         {(roundState.answerHints ?? []).map((hint, i) => {
           const isFound = hint === null;
-          // Find which found answer belongs to this slot
-          // foundAnswers is in discovery order; match by counting nulls up to index i
-          const foundIndex = isFound
-            ? roundState.answerHints.slice(0, i + 1).filter((h) => h === null)
-                .length - 1
-            : -1;
-          const foundAnswer =
-            isFound && foundIndex >= 0
-              ? roundState.foundAnswers[foundIndex]
-              : null;
+          // answerHints preserves original answer order (null = found, letter = unfound)
+          // foundAnswerSlots maps each original position to the matched answer text
+          const foundAnswer = isFound
+            ? (roundState.foundAnswerSlots?.[i] ??
+              roundState.foundAnswers[0] ??
+              null)
+            : null;
           const isFlashing = foundAnswer && flash === foundAnswer;
 
           return (
