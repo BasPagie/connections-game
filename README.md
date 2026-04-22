@@ -1,27 +1,30 @@
-# Connections Game
+# Woordspel!
 
-A Dutch multiplayer word puzzle game for our weekly team quiz. Mixes NYT Connections with De Slimste Mens. Real-time, runs in the browser.
+Multiplayer Dutch word puzzle game for our weekly quiz night. Mixes NYT Connections with De Slimste Mens rounds. Real-time, browser-based, everyone plays on their own device.
 
 ## Game modes
 
-Three game modes, freely mixable per round:
+Four modes, freely mixable per round:
 
-- **🔗 Connections** — 16 words on screen, group them into 4 categories of 4. 100 pts per group, −25 for wrong guesses. Partial-match hints highlight words that belong together.
-- **🧩 Puzzelronde** — 12 words in 3 groups. Find the groups, then type the connecting word. 100 pts per group + 150 bonus for the correct connecting word. Fuzzy matching accepts small typos.
-- **🚪 Open Deur** — 3 questions, each with 4 correct answers. Type as many as you can. 50 pts per answer, no penalty for wrong guesses. Skip questions if you're stuck.
+- **🔗 Connections** — 16 words, group them into 4 categories of 4. +100 per group, −25 for wrong guesses. Partial-match hints when you're close.
+- **🧩 Puzzelronde** — 16 words in 4 groups. Type the connecting word that links each group. +150 per correct word. Typos are forgiven.
+- **🚪 Open Deur** — 3 trivia questions, each with 4 answers. Type them in, first letter shown as hint. +50 per answer. No penalty for guessing wrong.
+- **🟩 Lingo** — Guess 5-letter Dutch words. First letter given, 5 attempts per word. Green/yellow/gray feedback. +100 per word + bonus for fewer guesses. 3 words per round.
 
 ## How it works
 
-The host creates a room and shares the invite link. Everyone joins on their own device. The host configures:
+Host creates a room, shares the invite link. Everyone joins and the host configures:
 
-- Which game modes and difficulty per round (up to 5 rounds)
-- Lives (1–10) or unlimited attempts
+- Game modes and difficulty per round (up to 5 rounds)
 - Timer (1–5 min or no limit)
-- Whether the host plays or spectates
+- Lives or unlimited attempts
+- Host plays or spectates
 
-Everyone plays simultaneously. Speed bonus for finishing early. Results are revealed after each round with rankings.
+Everyone plays at the same time. Finish early = speed bonus. Scores shown after each round, podium at the end.
 
-90 puzzles included (30 per mode, all Dutch), 3 difficulty levels.
+First time joining? The rules popup shows automatically.
+
+120 puzzles total (30 per mode), 3 difficulty levels, all in Dutch.
 
 ## Setup
 
@@ -30,26 +33,28 @@ npm run install:all
 npm run dev
 ```
 
-Client runs on `localhost:5173`, server on `localhost:3001`.
+Client on `localhost:5173`, server on `localhost:3001`.
+
+For bot testing: server starts with `DEV_MODE=true` by default in dev.
 
 ## Stack
 
-- **Client**: React 18, TypeScript, Vite 5, Tailwind CSS 3, Framer Motion
+- **Client**: React 18, TypeScript, Vite, Tailwind CSS, Framer Motion
 - **Server**: Node.js, Express, Socket.IO, TypeScript
-- **Shared**: TypeScript types used by both client and server
+- **Shared**: TypeScript types + socket event contracts
 
 ## Project structure
 
 ```
 client/src/
-  components/    # game UI (ConnectionsGame, PuzzelrondeGame, OpenDeurGame, ...)
-  context/       # game state (GameContext) + socket (SocketContext)
+  components/    # ConnectionsGame, PuzzelrondeGame, OpenDeurGame, LingoGame, ...
+  context/       # GameContext + SocketContext
   hooks/         # useSocketEvents
   pages/         # Landing, Join, Lobby, Game, Results
 
 server/src/
   gameEngine.ts      # round logic, scoring, fuzzy matching
-  puzzleStore.ts     # all 90 puzzles
+  puzzleStore.ts     # 120 puzzles
   socketHandlers.ts  # socket events, rate limiting
   rooms.ts           # room management
 
