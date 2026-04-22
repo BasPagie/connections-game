@@ -1,7 +1,7 @@
-# Woordspel! — Manual Test Plan
+# Woord — Manual Test Plan
 
 > **Last updated:** 2026-03-29
-> **App:** Woordspel! (multiplayer Dutch word puzzle game)
+> **App:** Woord (multiplayer Dutch word puzzle game)
 > **Stack:** React + Vite + Tailwind (client) / Node + Express + Socket.IO (server)
 > **Test URL:** `http://localhost:5173` (client) / `http://localhost:3001` (server)
 

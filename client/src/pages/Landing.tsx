@@ -37,7 +37,7 @@ export default function Landing() {
           className="font-display font-black text-4xl sm:text-6xl md:text-7xl text-transparent bg-clip-text 
                         bg-gradient-to-r from-brand-500 via-orange-500 to-pink-500 mb-3"
         >
-          Woordspel!
+          Woord
         </h1>
         <p className="text-lg sm:text-xl text-gray-600 font-display">
           Connections, Lingo, Puzzelronde en meer. Met vrienden! 🎮

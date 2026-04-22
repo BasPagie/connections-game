@@ -80,7 +80,7 @@ export default function Join() {
           className="font-display font-black text-4xl sm:text-5xl text-transparent bg-clip-text 
                         bg-gradient-to-r from-brand-500 via-orange-500 to-pink-500 mb-2"
         >
-          Woordspel
+          Woord
         </h1>
         {roomStatus === "joinable" && (
           <p className="text-lg text-gray-600 font-display">

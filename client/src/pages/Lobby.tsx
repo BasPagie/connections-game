@@ -17,7 +17,7 @@ export default function Lobby() {
   const socket = useSocket();
   const { state } = useGame();
   const [copied, setCopied] = useState(false);
-  const isFirstVisit = !localStorage.getItem("woordspel-rules-seen");
+  const isFirstVisit = !localStorage.getItem("woord-rules-seen");
   const [showInfo, setShowInfo] = useState(isFirstVisit);
   const [waitExpired, setWaitExpired] = useState(false);
 
@@ -313,7 +313,7 @@ export default function Lobby() {
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
             onClick={() => {
               setShowInfo(false);
-              localStorage.setItem("woordspel-rules-seen", "1");
+              localStorage.setItem("woord-rules-seen", "1");
             }}
           >
             <motion.div
@@ -401,7 +401,7 @@ export default function Lobby() {
               <button
                 onClick={() => {
                   setShowInfo(false);
-                  localStorage.setItem("woordspel-rules-seen", "1");
+                  localStorage.setItem("woord-rules-seen", "1");
                 }}
                 className="btn-primary w-full mt-4"
               >

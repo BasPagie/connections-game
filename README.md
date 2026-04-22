@@ -1,4 +1,4 @@
-# Woordspel!
+# Woord
 
 Multiplayer Dutch word puzzle game for our weekly quiz night. Mixes NYT Connections with De Slimste Mens rounds. Real-time, browser-based, everyone plays on their own device.
 
